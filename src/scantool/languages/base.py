@@ -1164,7 +1164,7 @@ class BaseLanguage(ABC):
 
     def _attached_prefix(self, node) -> list:
         """The ATTACHED_PREFIX_TYPES siblings directly before `node`, in source order."""
-        prefix = []
+        prefix: list = []
         prev = node.prev_sibling
         while (
             prev is not None and prev.type in self.ATTACHED_PREFIX_TYPES + self.ATTACHED_PREFIX_SKIP
