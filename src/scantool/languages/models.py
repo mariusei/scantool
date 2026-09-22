@@ -98,6 +98,15 @@ class StructureNode:
         if self.name and ("\n" in self.name or "\r" in self.name):
             self.name = " ".join(self.name.split())
 
+    @property
+    def is_local(self) -> bool:
+        """A named function declared inside another function's body, listed
+        so it can be read and focused. It is not a definition of the module:
+        not a call-graph node (a call inside it belongs to the enclosing
+        definition, CONTRIBUTING "caller-resolution contract") and not a
+        code-health candidate."""
+        return "local" in self.modifiers
+
     def __repr__(self):
         return f"{self.type}: {self.name} ({self.start_line}-{self.end_line})"
 

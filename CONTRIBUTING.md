@@ -480,6 +480,15 @@ intermediates **transparent** — attribute the call to the nearest enclosing
 *extracted* definition (see `python.py::_extract_calls_tree_sitter`, the
 `def_names` guard).
 
+Listing a nested helper for the reader is a separate matter. A handler may
+emit a named function declared inside a function body as a structure child
+with the `local` modifier (`typescript.py::_collect_local`: React handlers,
+`useCallback` bodies, helpers inside a `useEffect`). `StructureNode.is_local`
+keeps it out of the module's definitions, out of code health's member count,
+and out of excerpt selection (the enclosing body keeps its excerpt), so the
+contract above is unchanged: it is navigable in `scan`/`focus`, and calls
+inside it still belong to the enclosing definition.
+
 **Data-format requirement (what `extract_calls` must return):** `caller_name`
 matches a `DefinitionInfo.name` (or `f"{parent}.{name}"` for methods) you also
 return from `extract_definitions`, or is `None`. Names only — no qualifiers the
