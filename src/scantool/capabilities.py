@@ -40,6 +40,10 @@ class Capability:
     hints: tuple[str, ...] = ()  # shell forms the tool descriptions carry
     json: bool = True
     substitutes: tuple[tuple[str, str], ...] = ()  # (shell habit, sct form) for the block
+    # The questions it answers, in the words an agent types into ToolSearch
+    # when MCP schemas are deferred: ranking there is word overlap with the
+    # description, and `long` names what the tool gives, not what it is for.
+    asks: tuple[str, ...] = ()
 
 
 CAPABILITIES: tuple[Capability, ...] = (
@@ -94,6 +98,12 @@ CAPABILITIES: tuple[Capability, ...] = (
         },
         hints=("scan <path>", "focus <path> <name>"),
         substitutes=(("cat f | head, sed -n a,bp f", "sct scan f --depth quick"),),
+        asks=(
+            "read a file's contents",
+            "outline of a file",
+            "list the functions and classes in a file",
+            "read one function or class by name",
+        ),
     ),
     Capability(
         command="focus",
@@ -142,6 +152,10 @@ CAPABILITIES: tuple[Capability, ...] = (
         },
         hints=("search <dir> <pattern>",),
         substitutes=(("grep -rn p", "sct search . p"),),
+        asks=(
+            "find where a function or class is defined",
+            "find text in code across files",
+        ),
     ),
     Capability(
         command="diff",
@@ -221,6 +235,11 @@ CAPABILITIES: tuple[Capability, ...] = (
         ),
         tools={"callers": ""},
         hints=("callers <name>", "callers <name> --dir <dir>"),
+        asks=(
+            "who calls this function",
+            "find usages and references of a function or method",
+            "which files import this file",
+        ),
     ),
     Capability(
         command="resolve",
@@ -281,9 +300,11 @@ def capability_of_tool(tool: str) -> Capability:
 
 def tool_description(tool: str) -> str:
     """The MCP tool's description: the capability's paragraph, what this
-    tool adds, and (appended by the server) the shell hint."""
+    tool adds, the questions it answers, and (appended by the server) the
+    shell hint."""
     entry = capability_of_tool(tool)
-    return entry.long + entry.tools[tool]
+    asks = f" Answers: {'; '.join(entry.asks)}." if entry.asks else ""
+    return entry.long + entry.tools[tool] + asks
 
 
 def shell_summary() -> str:
