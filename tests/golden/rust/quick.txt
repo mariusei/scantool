@@ -1,10 +1,10 @@
 <1 file seen, 19 structures shown>
 basic.rs (3-105)
 - use statements @3
-- User @8 [pub] # User account with basic information.
+- User @7 [pub] # User account with basic information.
    #[derive(Debug, Clone)]
    pub struct User {
-    …
+       …
 - DatabaseManager @15 [pub] # Database connection manager.
    pub struct DatabaseManager {
     …

@@ -1,6 +1,6 @@
 <1 file seen, 19 structures shown, 1 excluded (.git/)>
-basic.rs (8-77)
-- User @8 [pub] # User account with basic information.
+basic.rs (7-77)
+- User @7 [pub] # User account with basic information.
    #[derive(Debug, Clone)]
    pub struct User {
        …
