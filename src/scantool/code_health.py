@@ -141,7 +141,7 @@ def _collect_definitions(results, contents) -> tuple[list[Definition], set[str]]
     rooted: set[str] = set()
 
     def walk(nodes, file_path, source_lines, parent=None):
-        for node in nodes:
+        for node in (n for n in nodes if not n.is_local):
             if node.type not in _SKIP_TYPES and node.name and node.end_line >= node.start_line:
                 block_lines = source_lines[node.start_line - 1 : node.end_line]
                 block = "\n".join(
@@ -160,7 +160,7 @@ def _collect_definitions(results, contents) -> tuple[list[Definition], set[str]]
                         name=node.name,
                         line=node.start_line,
                         block=block,
-                        flaggable=not node.children and not in_subclass,
+                        flaggable=all(c.is_local for c in node.children) and not in_subclass,
                         parent=parent.name if parent is not None else None,
                         modifiers=list(node.modifiers or []),
                         decorators=list(node.decorators or []),

@@ -42,6 +42,10 @@ class Capability:
     # (shell habit, sct form, what the agent gains) for the block: the gain is
     # the reason to break a habit that seems to work
     substitutes: tuple[tuple[str, str, str], ...] = ()
+    # The questions it answers, in the words an agent types into ToolSearch
+    # when MCP schemas are deferred: ranking there is word overlap with the
+    # description, and `long` names what the tool gives, not what it is for.
+    asks: tuple[str, ...] = ()
 
 
 CAPABILITIES: tuple[Capability, ...] = (
@@ -60,6 +64,11 @@ CAPABILITIES: tuple[Capability, ...] = (
         hints=("<dir>",),
         json=False,
         substitutes=(("ls <dir>, find <dir>", "sct <dir>", "entry points, call map"),),
+        asks=(
+            "an overview of a codebase or repository",
+            "where to start in an unfamiliar project",
+            "entry points and the most-called functions",
+        ),
     ),
     Capability(
         command="scan",
@@ -96,6 +105,12 @@ CAPABILITIES: tuple[Capability, ...] = (
         },
         hints=("scan <path>", "focus <path> <name>"),
         substitutes=(("cat f | head, sed -n a,bp f", "sct scan f --depth quick", "path:line"),),
+        asks=(
+            "read a file's contents",
+            "outline of a file",
+            "list the functions and classes in a file",
+            "read or show the source of one function, method or class by name",
+        ),
     ),
     Capability(
         command="focus",
@@ -144,6 +159,10 @@ CAPABILITIES: tuple[Capability, ...] = (
         },
         hints=("search <dir> <pattern>",),
         substitutes=(("grep -rn p", "sct search . p", "hits in their function"),),
+        asks=(
+            "find where a function or class is defined",
+            "find text in code across files",
+        ),
     ),
     Capability(
         command="diff",
@@ -171,6 +190,11 @@ CAPABILITIES: tuple[Capability, ...] = (
         },
         hints=("diff <ref>", "diff <refA> <refB>"),
         substitutes=(("git diff A..B", "sct diff A B", "per function"),),
+        asks=(
+            "what changed between two commits or branches, per function",
+            "review the changes of a pull request or branch",
+            "local changes against HEAD, as structures rather than lines",
+        ),
     ),
     Capability(
         command="surface",
@@ -188,6 +212,11 @@ CAPABILITIES: tuple[Capability, ...] = (
         ),
         tools={"surface": ""},
         hints=("surface <package-dir>", "surface <package-dir> --against REF"),
+        asks=(
+            "the public API of a package or module",
+            "exported names and where each is defined",
+            "API changes between two versions",
+        ),
     ),
     Capability(
         command="overlap",
@@ -207,6 +236,11 @@ CAPABILITIES: tuple[Capability, ...] = (
         ),
         tools={"overlap": ""},
         hints=("overlap <base> <branch>...",),
+        asks=(
+            "do branches conflict or change the same functions",
+            "in which order to merge several branches",
+            "which commits two pull requests share",
+        ),
     ),
     Capability(
         command="callers",
@@ -223,6 +257,11 @@ CAPABILITIES: tuple[Capability, ...] = (
         ),
         tools={"callers": ""},
         hints=("callers <name>", "callers <name> --dir <dir>"),
+        asks=(
+            "who calls this function",
+            "find usages and references of a function or method",
+            "which files import this file",
+        ),
     ),
     Capability(
         command="resolve",
@@ -235,6 +274,10 @@ CAPABILITIES: tuple[Capability, ...] = (
         ),
         tools={"resolve": ""},
         hints=("resolve <path:line> --from REF", "resolve <path::name> --from REF --to REF"),
+        asks=(
+            "where a line or function is at another commit",
+            "map a line number from one commit to another",
+        ),
     ),
     Capability(
         command="divergence",
@@ -249,6 +292,10 @@ CAPABILITIES: tuple[Capability, ...] = (
         tools={"find_divergence": ""},
         hints=("divergence <dir>",),
         json=False,
+        asks=(
+            "functions that break a pattern their siblings follow",
+            "likely missed calls, as a review hint",
+        ),
     ),
     Capability(
         command="history",
@@ -264,6 +311,11 @@ CAPABILITIES: tuple[Capability, ...] = (
         tools={"history": ""},
         hints=("history <path::name>", "history <path:line> --ref REF"),
         substitutes=(("git log -L", "sct history f::name", "through renames"),),
+        asks=(
+            "which commits changed this function or class, and when",
+            "git log or git blame for one function",
+            "how a function evolved across commits",
+        ),
     ),
 )
 
@@ -284,9 +336,11 @@ def capability_of_tool(tool: str) -> Capability:
 
 def tool_description(tool: str) -> str:
     """The MCP tool's description: the capability's paragraph, what this
-    tool adds, and (appended by the server) the shell hint."""
+    tool adds, the questions it answers, and (appended by the server) the
+    shell hint."""
     entry = capability_of_tool(tool)
-    return entry.long + entry.tools[tool]
+    asks = f" Answers: {'; '.join(entry.asks)}." if entry.asks else ""
+    return entry.long + entry.tools[tool] + asks
 
 
 def shell_summary() -> str:

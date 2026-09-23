@@ -1153,6 +1153,32 @@ class BaseLanguage(ABC):
     # Helper methods (from BaseScanner)
     # ===========================================================================
 
+    # Node types that bind to the definition following them as siblings
+    # (Python/TypeScript decorators, Rust attributes), and the types that may sit
+    # between them. A definition's span starts at the first bound prefix node, so
+    # cutting a reported span never leaves one behind to bind to the next
+    # definition. Grammars that nest them inside the definition node (Java, C#,
+    # PHP, Swift) need neither.
+    ATTACHED_PREFIX_TYPES: tuple[str, ...] = ()
+    ATTACHED_PREFIX_SKIP: tuple[str, ...] = ()
+
+    def _attached_prefix(self, node) -> list:
+        """The ATTACHED_PREFIX_TYPES siblings directly before `node`, in source order."""
+        prefix: list = []
+        prev = node.prev_sibling
+        while (
+            prev is not None and prev.type in self.ATTACHED_PREFIX_TYPES + self.ATTACHED_PREFIX_SKIP
+        ):
+            if prev.type in self.ATTACHED_PREFIX_TYPES:
+                prefix.insert(0, prev)
+            prev = prev.prev_sibling
+        return prefix
+
+    def _span_start(self, node) -> int:
+        """1-based first line of a definition, its attached prefix included."""
+        prefix = self._attached_prefix(node)
+        return (prefix[0] if prefix else node).start_point[0] + 1
+
     def _get_node_text(self, node, source_code: bytes) -> str:
         """Extract text from a tree-sitter node."""
         try:
