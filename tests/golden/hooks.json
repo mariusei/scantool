@@ -1,5 +1,7 @@
 {
   "hooks": [
+    "ATTACHED_PREFIX_SKIP",
+    "ATTACHED_PREFIX_TYPES",
     "CLAIMS_DEAD",
     "CONDENSE_STRATEGY",
     "IMPORT_GROUP_LABEL",
@@ -37,6 +39,8 @@
   ],
   "languages": {
     "C#": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "overridden",
       "CONDENSE_STRATEGY": "overridden",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -73,6 +77,8 @@
       "should_skip": "overridden"
     },
     "C/C++": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "overridden",
       "CONDENSE_STRATEGY": "overridden",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -109,6 +115,8 @@
       "should_skip": "overridden"
     },
     "CSS": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "inherited",
       "CONDENSE_STRATEGY": "overridden",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -145,6 +153,8 @@
       "should_skip": "overridden"
     },
     "Config": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "inherited",
       "CONDENSE_STRATEGY": "inherited",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -181,6 +191,8 @@
       "should_skip": "overridden"
     },
     "Go": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "overridden",
       "CONDENSE_STRATEGY": "overridden",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -217,6 +229,8 @@
       "should_skip": "overridden"
     },
     "HTML": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "inherited",
       "CONDENSE_STRATEGY": "overridden",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -253,6 +267,8 @@
       "should_skip": "overridden"
     },
     "Image": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "inherited",
       "CONDENSE_STRATEGY": "inherited",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -289,6 +305,8 @@
       "should_skip": "inherited"
     },
     "JSON": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "inherited",
       "CONDENSE_STRATEGY": "overridden",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -325,6 +343,8 @@
       "should_skip": "overridden"
     },
     "Java": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "overridden",
       "CONDENSE_STRATEGY": "overridden",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -361,6 +381,8 @@
       "should_skip": "overridden"
     },
     "Jupyter": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "inherited",
       "CONDENSE_STRATEGY": "inherited",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -397,6 +419,8 @@
       "should_skip": "inherited"
     },
     "Markdown": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "inherited",
       "CONDENSE_STRATEGY": "inherited",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -433,6 +457,8 @@
       "should_skip": "inherited"
     },
     "PHP": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "overridden",
       "CONDENSE_STRATEGY": "overridden",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -469,6 +495,8 @@
       "should_skip": "inherited"
     },
     "Plain Text": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "inherited",
       "CONDENSE_STRATEGY": "inherited",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -505,6 +533,8 @@
       "should_skip": "inherited"
     },
     "Python": {
+      "ATTACHED_PREFIX_SKIP": "overridden",
+      "ATTACHED_PREFIX_TYPES": "overridden",
       "CLAIMS_DEAD": "overridden",
       "CONDENSE_STRATEGY": "inherited",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -541,6 +571,8 @@
       "should_skip": "overridden"
     },
     "Ruby": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "inherited",
       "CONDENSE_STRATEGY": "overridden",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -577,6 +609,8 @@
       "should_skip": "inherited"
     },
     "Rust": {
+      "ATTACHED_PREFIX_SKIP": "overridden",
+      "ATTACHED_PREFIX_TYPES": "overridden",
       "CLAIMS_DEAD": "overridden",
       "CONDENSE_STRATEGY": "overridden",
       "IMPORT_GROUP_LABEL": "overridden",
@@ -613,6 +647,8 @@
       "should_skip": "overridden"
     },
     "SCSS": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "inherited",
       "CONDENSE_STRATEGY": "overridden",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -649,6 +685,8 @@
       "should_skip": "overridden"
     },
     "SQL": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "inherited",
       "CONDENSE_STRATEGY": "overridden",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -685,6 +723,8 @@
       "should_skip": "inherited"
     },
     "Swift": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "overridden",
       "CONDENSE_STRATEGY": "overridden",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -721,6 +761,8 @@
       "should_skip": "overridden"
     },
     "TOML": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "inherited",
       "CONDENSE_STRATEGY": "overridden",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -757,6 +799,8 @@
       "should_skip": "overridden"
     },
     "TypeScript/JavaScript": {
+      "ATTACHED_PREFIX_SKIP": "overridden",
+      "ATTACHED_PREFIX_TYPES": "overridden",
       "CLAIMS_DEAD": "overridden",
       "CONDENSE_STRATEGY": "overridden",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -793,6 +837,8 @@
       "should_skip": "overridden"
     },
     "YAML": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "inherited",
       "CONDENSE_STRATEGY": "overridden",
       "IMPORT_GROUP_LABEL": "inherited",
@@ -829,6 +875,8 @@
       "should_skip": "overridden"
     },
     "Zig": {
+      "ATTACHED_PREFIX_SKIP": "inherited",
+      "ATTACHED_PREFIX_TYPES": "inherited",
       "CLAIMS_DEAD": "overridden",
       "CONDENSE_STRATEGY": "overridden",
       "IMPORT_GROUP_LABEL": "inherited",

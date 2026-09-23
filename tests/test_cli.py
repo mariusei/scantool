@@ -392,8 +392,8 @@ def test_search_decorator_is_a_table_of_decorated_structures(tmp_path, capsys):
     assert code == 0
     rows = [line for line in out.splitlines() if line.startswith("- ")]
     assert rows == [
-        '- list_items () -> list @5 [async] @router.get("/items")',
-        '- create_item (item: dict) -> dict @9 [async] @router.post("/items") # Create one.',
+        '- list_items () -> list @4 [async] @router.get("/items")',
+        '- create_item (item: dict) -> dict @8 [async] @router.post("/items") # Create one.',
     ]
     assert "helper" not in out and "router = " not in out
 

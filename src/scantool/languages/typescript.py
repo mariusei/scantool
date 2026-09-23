@@ -101,6 +101,8 @@ class TypeScriptLanguage(BaseLanguage):
     """
 
     CONDENSE_STRATEGY = "skeleton"
+    ATTACHED_PREFIX_TYPES = ("decorator",)
+    ATTACHED_PREFIX_SKIP = ("comment",)
 
     # ── Reachability contract (dead-code detection) ──────────────────────────
     # Off-graph channels the static call graph cannot see in TS/JS:
@@ -345,7 +347,7 @@ class TypeScriptLanguage(BaseLanguage):
         return StructureNode(
             type="class",
             name=name,
-            start_line=node.start_point[0] + 1,
+            start_line=self._span_start(node),
             end_line=node.end_point[0] + 1,
             signature=signature,
             decorators=decorators,
@@ -429,7 +431,7 @@ class TypeScriptLanguage(BaseLanguage):
         return StructureNode(
             type="method",
             name=name,
-            start_line=node.start_point[0] + 1,
+            start_line=self._span_start(node),
             end_line=node.end_point[0] + 1,
             signature=signature,
             decorators=decorators,
@@ -584,15 +586,7 @@ class TypeScriptLanguage(BaseLanguage):
 
     def _extract_decorators(self, node: Node, source_code: bytes) -> list[str]:
         """Extract decorators from a function/class/method."""
-        decorators: list[str] = []
-        prev = node.prev_sibling
-
-        while prev and prev.type == "decorator":
-            dec_text = self._get_node_text(prev, source_code).strip()
-            decorators.insert(0, dec_text)  # Insert at beginning to maintain order
-            prev = prev.prev_sibling
-
-        return decorators
+        return [self._get_node_text(d, source_code).strip() for d in self._attached_prefix(node)]
 
     def _extract_jsdoc(self, node: Node, source_code: bytes) -> str | None:
         """Extract first line of JSDoc comment."""

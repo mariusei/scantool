@@ -1,6 +1,6 @@
 <6 public names, 6 via definition> package rust @WORKTREE
 basic
-  User                                    rust/basic.rs:8
+  User                                    rust/basic.rs:7
   DatabaseManager                         rust/basic.rs:15
   UserService                             rust/basic.rs:42
   Validate                                rust/basic.rs:64
