@@ -1,5 +1,6 @@
 """Tests for code map orchestrator."""
 
+import os
 import tempfile
 from pathlib import Path
 
@@ -243,3 +244,21 @@ def test_next_steps_speaks_sct(fixture, request, monkeypatch):
         path = row.split()[2]
         if "<" not in path:
             assert (project.parent / path.rstrip("/")).exists(), f"not pasteable: {row}"
+
+
+def test_next_steps_survive_a_directory_on_another_drive(temp_project, monkeypatch):
+    """On Windows, os.path.relpath raises when the scanned directory and the
+    caller sit on different drives; the next part then writes absolute paths
+    instead of failing the whole orientation (seen on CI: C: vs D:)."""
+
+    def no_relative_path(path, start=None):
+        raise ValueError("path is on mount 'C:', start on mount 'D:'")
+
+    cm = CodeMap(str(temp_project), enable_layer2=True)
+    result = cm.analyze()
+    monkeypatch.setattr("scantool.code_map.os.path.relpath", no_relative_path)
+    lines = cm.sections(result)["next"]
+    rows = [line.strip() for line in lines if line.strip().startswith("sct ")]
+    assert rows
+    absolute = str(temp_project.resolve()).replace(os.sep, "/")
+    assert any(absolute in row for row in rows), rows

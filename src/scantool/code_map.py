@@ -891,8 +891,13 @@ class CodeMap:
     def _next_section(self, result: CodeMapResult) -> list[str]:
         """Contextual recommendations: where to drill down next. Each row is a
         command to paste, so paths are written from the caller's directory,
-        not from the scanned one."""
-        base = os.path.relpath(self.directory, os.getcwd())
+        not from the scanned one: relative when there is a relative path,
+        absolute when there is none (Windows, another drive), "/"-joined."""
+        try:
+            base = os.path.relpath(self.directory, os.getcwd())
+        except ValueError:  # the scanned directory is on another drive
+            base = os.path.abspath(self.directory)
+        base = base.replace(os.sep, "/")
         prefix = "" if base == "." else f"{base}/"
         recommendations = []
 
