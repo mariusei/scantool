@@ -1,9 +1,9 @@
 <1 file seen, 16 structures shown, 1 excluded (.git/)>
 1 hits in 1 structures for /sale_prices/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers sale_prices (only the real call sites, not comments or strings)
 
 ./basic.sql
 - sale_prices SELECT product_id, name, calculate_discount(price,... @38-40  (1 hit)
    38 | CREATE VIEW sale_prices AS
-
-leads: none (no name called in the hits is defined in another scanned file)
 [exit 0]

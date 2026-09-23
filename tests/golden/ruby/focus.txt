@@ -1,4 +1,5 @@
 basic.rb::DataAccess.DatabaseManager (10-38)
+next: sct callers DatabaseManager (its call sites) · sct history basic.rb::DataAccess.DatabaseManager (the commits that changed it)
 basic.rb (3-97)
 - require statements @3
 - DataAccess @8 # Data access layer module

@@ -1,5 +1,7 @@
 <1 file seen, 29 structures shown, 1 excluded (.git/)>
 3 hits in 2 structures for /TryConnect/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers TryConnect (only the real call sites, not comments or strings)
 
 ./Basic.cs
 - MyApp.Services > ConnectionRetrier > RetryConnect (DatabaseManager db) : bool @183-193  (2 hits)
@@ -7,6 +9,4 @@
    187 | if (TryConnect(db))
 - MyApp.Services > ConnectionRetrier > TryConnect (DatabaseManager db) : bool @195-199  (1 hit)
    195 | private static bool TryConnect(DatabaseManager db)
-
-leads: none (no name called in the hits is defined in another scanned file)
 [exit 0]

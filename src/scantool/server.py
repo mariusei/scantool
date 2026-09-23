@@ -416,16 +416,39 @@ def _focus_answer(
     focus: str,
     output_format: str,
     body_only: bool = False,
+    on_disk: bool = False,
 ) -> str:
     """One node verbatim with parent context (body_only: without it), as
     text or as a document; a miss or an ambiguity is the same message in
-    both forms."""
+    both forms. on_disk: the lines were read from `path` itself, so its git
+    history describes them (not content handed over under that name)."""
     if output_format != "json":
         return format_focus(
-            path, structures, source_lines, focus, addressed=True, body_only=body_only
+            path,
+            structures,
+            source_lines,
+            focus,
+            addressed=True,
+            body_only=body_only,
+            in_git=on_disk and _in_git(path),
         )
     document = focus_to_json(path, structures, source_lines, focus, body_only=body_only)
     return document if isinstance(document, str) else json.dumps(document, indent=2)
+
+
+def _in_git(file_path: str) -> bool:
+    """A file on disk inside a git worktree: content read from stdin under a
+    borrowed name has no history to follow."""
+    if not os.path.isfile(file_path):
+        return False
+    here = os.path.dirname(os.path.abspath(file_path))
+    while True:
+        if os.path.exists(os.path.join(here, ".git")):
+            return True
+        parent = os.path.dirname(here)
+        if parent == here:
+            return False
+        here = parent
 
 
 def _at_ref_file(file_path: str, ref: str, **kwargs) -> list[TextContent]:
@@ -786,7 +809,7 @@ def scan_file(
         if focus is not None:
             source_lines = Path(file_path).read_text(errors="replace").split("\n")
             answer = _focus_answer(
-                file_path, structures, source_lines, focus, output_format, body_only
+                file_path, structures, source_lines, focus, output_format, body_only, on_disk=True
             )
             return [TextContent(type="text", text=answer)]
 

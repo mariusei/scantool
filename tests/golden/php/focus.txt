@@ -1,4 +1,5 @@
 basic.php::DatabaseConfig.getHost (16-16)
+next: sct callers getHost (its call sites) · sct history basic.php::DatabaseConfig.getHost (the commits that changed it)
 basic.php (6-167)
 - App\Database @6
 - use statements @8

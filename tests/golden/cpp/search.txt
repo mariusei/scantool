@@ -1,11 +1,11 @@
 <1 file seen, 24 structures shown, 1 excluded (.git/)>
 2 hits in 2 structures for /main/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers main (only the real call sites, not comments or strings)
 
 ./basic.cpp
 - (module level) @138-138  (1 hit)
    138 | // Main entry point
 - main int () @139-151  (1 hit)
    139 | int main() {
-
-leads: none (no name called in the hits is defined in another scanned file)
 [exit 0]

@@ -1,5 +1,7 @@
 <1 file seen, 17 structures shown, 1 excluded (.git/)>
 4 hits in 2 structures for /main/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers main (only the real call sites, not comments or strings)
 
 ./basic.py
 - main () @65-71  (2 hits)
@@ -8,6 +10,4 @@
 - (module level) @74-74  (2 hits)
    74 | if __name__ == "__main__":
    75 | main()
-
-leads: none (no name called in the hits is defined in another scanned file)
 [exit 0]

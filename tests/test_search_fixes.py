@@ -126,8 +126,14 @@ def test_no_structure_by_name_still_names_the_paths_that_match(tmp_path, capsys)
 def test_leads_none_is_said(tmp_path, capsys):
     (tmp_path / "notes.md").write_text("# Notes\n\nsome needle here\n")
     out, _, _ = run("search", str(tmp_path), "needle", capsys=capsys)
-    assert out.rstrip().endswith(
+    lines = out.splitlines()
+    header = next(i for i, line in enumerate(lines) if " hits in " in line)
+    # under the header, not after the hits: a long answer is cut at the bottom
+    assert lines[header + 1] == (
         "leads: none (no name called in the hits is defined in another scanned file)"
+    )
+    assert lines[header + 2] == (
+        "next: sct callers needle (only the real call sites, not comments or strings)"
     )
 
 

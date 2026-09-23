@@ -1,4 +1,5 @@
 basic.rs::DatabaseManager.new (22-27)
+next: sct callers new (its call sites) · sct history basic.rs::DatabaseManager.new (the commits that changed it)
 basic.rs (3-105)
 - use statements @3
 - User @8 [pub] # User account with basic information.

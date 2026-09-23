@@ -39,7 +39,9 @@ class Capability:
     tools: dict[str, str] = field(default_factory=dict)  # MCP tool -> what that tool adds
     hints: tuple[str, ...] = ()  # shell forms the tool descriptions carry
     json: bool = True
-    substitutes: tuple[tuple[str, str], ...] = ()  # (shell habit, sct form) for the block
+    # (shell habit, sct form, what the agent gains) for the block: the gain is
+    # the reason to break a habit that seems to work
+    substitutes: tuple[tuple[str, str, str], ...] = ()
 
 
 CAPABILITIES: tuple[Capability, ...] = (
@@ -57,7 +59,7 @@ CAPABILITIES: tuple[Capability, ...] = (
         tools={"preview_directory": ""},
         hints=("<dir>",),
         json=False,
-        substitutes=(("ls <dir>, find <dir>", "sct <dir>"),),
+        substitutes=(("ls <dir>, find <dir>", "sct <dir>", "entry points, call map"),),
     ),
     Capability(
         command="scan",
@@ -93,7 +95,7 @@ CAPABILITIES: tuple[Capability, ...] = (
             "list_directories": " Folders only, no files: the directory hierarchy.",
         },
         hints=("scan <path>", "focus <path> <name>"),
-        substitutes=(("cat f | head, sed -n a,bp f", "sct scan f --depth quick"),),
+        substitutes=(("cat f | head, sed -n a,bp f", "sct scan f --depth quick", "path:line"),),
     ),
     Capability(
         command="focus",
@@ -112,7 +114,7 @@ CAPABILITIES: tuple[Capability, ...] = (
             "header and the node's numbered lines alone, no outline."
         ),
         hints=("focus <path> <name>", "focus <path>::<name>@REF"),
-        substitutes=(("git show REF:f | sed -n", "sct focus f::name@REF"),),
+        substitutes=(("git show REF:f | sed -n", "sct focus f::name@REF", "no guessed range"),),
     ),
     Capability(
         command="search",
@@ -141,7 +143,7 @@ CAPABILITIES: tuple[Capability, ...] = (
             )
         },
         hints=("search <dir> <pattern>",),
-        substitutes=(("grep -rn p", "sct search . p"),),
+        substitutes=(("grep -rn p", "sct search . p", "hits in their function"),),
     ),
     Capability(
         command="diff",
@@ -168,7 +170,7 @@ CAPABILITIES: tuple[Capability, ...] = (
             )
         },
         hints=("diff <ref>", "diff <refA> <refB>"),
-        substitutes=(("git diff A..B, git log -L", "sct diff A B, sct history f::name"),),
+        substitutes=(("git diff A..B", "sct diff A B", "per function"),),
     ),
     Capability(
         command="surface",
@@ -261,6 +263,7 @@ CAPABILITIES: tuple[Capability, ...] = (
         ),
         tools={"history": ""},
         hints=("history <path::name>", "history <path:line> --ref REF"),
+        substitutes=(("git log -L", "sct history f::name", "through renames"),),
     ),
 )
 
@@ -291,11 +294,11 @@ def shell_summary() -> str:
     each capability substitutes, then every command on one line."""
     lines = ["Per command:"]
     for entry in CAPABILITIES:
-        for habit, form in entry.substitutes:
-            lines.append(f"  {habit:29s} -> {form}")
+        for habit, form, gain in entry.substitutes:
+            lines.append(f"  {habit} -> {form}: {gain}")
     lines.append("Commands:")
     for entry in CAPABILITIES:
-        lines.append(f"  {_block_form(entry):33s} {entry.short}")
+        lines.append(f"  {_block_form(entry)}  {entry.short}")
     return "\n".join(lines)
 
 

@@ -1,5 +1,7 @@
 <1 file seen, 17 structures shown, 1 excluded (.git/)>
 3 hits in 3 structures for /retryConnect/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers retryConnect (only the real call sites, not comments or strings)
 
 ./basic.go
 - main () @86-90  (1 hit)
@@ -8,6 +10,4 @@
    95 | // retryConnect retries the connection until it succeeds or the budget is spent (internal)
 - retryConnect (db *DatabaseManager) error @96-104  (1 hit)
    96 | func retryConnect(db *DatabaseManager) error {
-
-leads: none (no name called in the hits is defined in another scanned file)
 [exit 0]

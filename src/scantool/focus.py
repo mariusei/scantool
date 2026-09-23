@@ -18,6 +18,7 @@ SCOPE:
 """
 
 import re
+import shlex
 from dataclasses import replace
 
 from .formatter import TreeFormatter
@@ -31,6 +32,7 @@ def format_focus(
     focus: str,
     addressed: bool = False,
     body_only: bool = False,
+    in_git: bool = False,
 ) -> str:
     """Render skeleton-with-context + verbatim body for the focused node.
 
@@ -55,7 +57,46 @@ def format_focus(
         return header + "\n" + "\n".join(_numbered(target, source_lines))
     path_ids = {id(node) for node in (*ancestors, target)}
     pruned = _prune(structures, target, path_ids, source_lines)
-    return header + "\n" + TreeFormatter().format(file_path, pruned)
+    pointer = next_steps(file_path, structures, target, ancestors, in_git)
+    return (
+        header
+        + "\n"
+        + (pointer + "\n" if pointer else "")
+        + TreeFormatter().format(file_path, pruned)
+    )
+
+
+# Structure types whose call sites `callers` finds
+_CALLABLE = ("function", "method", "class", "constructor")
+
+
+def next_steps(
+    file_path: str,
+    structures: list[StructureNode],
+    target: StructureNode,
+    ancestors: tuple,
+    in_git: bool,
+) -> str:
+    """The follow-up reads for a focused node, on the line under the header:
+    a long answer is read from the top and cut at the bottom, so a pointer
+    placed last is the one that gets lost. Each names what it gives and is
+    quoted to paste into a shell. `history` only for a file in a git worktree
+    (in_git, which the server layer knows) and a name that picks one node,
+    where it can answer."""
+    if target.synthetic:
+        return ""
+    steps = []
+    if target.type in _CALLABLE:
+        # the bare name: how a qualified one narrows differs per language
+        # (Java and Ruby definitions carry no class), the bare one always resolves
+        steps.append(f"sct callers {shlex.quote(target.name)} (its call sites)")
+    name = address_name(structures, target, ancestors)
+    # history takes no range: a name two structures share (a Rust struct and
+    # its impl) it cannot pick one of, so no pointer there
+    if in_git and len(_resolve(structures, name)) == 1:
+        address = shlex.quote(f"{file_path}::{name}")
+        steps.append(f"sct history {address} (the commits that changed it)")
+    return "next: " + " · ".join(steps) if steps else ""
 
 
 def focus_to_json(

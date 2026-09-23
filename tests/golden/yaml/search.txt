@@ -1,9 +1,9 @@
 <1 file seen, 36 structures shown, 1 excluded (.git/)>
 1 hits in 1 structures for /kill_after/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers kill_after (only the real call sites, not comments or strings)
 
 ./basic.yaml
 - document 2 > kill_after 120 @50-50  (1 hit)
    50 | kill_after: 120
-
-leads: none (no name called in the hits is defined in another scanned file)
 [exit 0]

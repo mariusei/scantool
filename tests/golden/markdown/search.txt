@@ -1,9 +1,8 @@
 <1 file seen, 25 structures shown, 1 excluded (.git/)>
 1 hits in 1 structures for /Final\ Section/
+leads: none (no name called in the hits is defined in another scanned file)
 
 ./basic.md
 - Alternative Heading Style > Subheading with Underline > Final Section @116-129  (1 hit)
    116 | ### Final Section
-
-leads: none (no name called in the hits is defined in another scanned file)
 [exit 0]

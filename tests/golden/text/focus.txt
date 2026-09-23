@@ -1,4 +1,5 @@
 basic.txt::"PROJECT OVERVIEW" (1-6)
+next: sct history 'basic.txt::"PROJECT OVERVIEW"' (the commits that changed it)
 basic.txt (1-88)
 - PROJECT OVERVIEW @1 # This is a plain text document demonstrating the text file scanner capabilities.
    1 | PROJECT OVERVIEW

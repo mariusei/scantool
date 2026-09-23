@@ -1,4 +1,5 @@
 basic.sql::users.id (5-5)
+next: sct history basic.sql::users.id (the commits that changed it)
 basic.sql (4-43)
 - users @4 # Users table to store user information
   - id INT PRIMARY KEY AUTO_INCREMENT @5

@@ -1,4 +1,5 @@
 basic.md::"Installation" (5-23)
+next: sct history 'basic.md::"Installation"' (the commits that changed it)
 basic.md (1-129)
 - Project Documentation @1 # This is a sample Markdown file for testing the scanner.
   - Installation @5 # To install the package, run:
