@@ -129,3 +129,50 @@ class TestHistory:
         _, err, code = _run("history", "src/mod.py::nothing", capsys=capsys)
         assert code == 1 and "no structure matches 'nothing'" in err
         assert cli.main(["history", "src/mod.py"]) == 2  # neither ::name nor :line
+
+    def test_range_suffix_picks_between_two_structures_named_alike(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        # A class and a function sharing a name, like a Rust struct and its
+        # impl block: same name, different type, so both survive as distinct
+        # records. history should accept the same " (a-b)" address focus does.
+        _git(tmp_path, "init", "-q", "-b", "main")
+        (tmp_path / "dup.py").write_text('class Thing:\n    """v1"""\n')
+        _commit(tmp_path, "add class Thing", "2026-03-01T00:00:00Z")
+        (tmp_path / "dup.py").write_text(
+            'class Thing:\n    """v1"""\n\n\ndef Thing():\n    return 2\n'
+        )
+        _commit(tmp_path, "add function Thing", "2026-03-02T00:00:00Z")
+        (tmp_path / "dup.py").write_text(
+            'class Thing:\n    """v2"""\n\n\ndef Thing():\n    return 2\n'
+        )
+        _commit(tmp_path, "class Thing changes its own body", "2026-03-03T00:00:00Z")
+        (tmp_path / "dup.py").write_text(
+            'class Thing:\n    """v2"""\n\n\ndef Thing():\n    return 9\n'
+        )
+        _commit(tmp_path, "function Thing returns 9", "2026-03-04T00:00:00Z")
+        monkeypatch.chdir(tmp_path)
+
+        _, err, code = _run("history", "dup.py::Thing", capsys=capsys)
+        assert code == 1 and "no structure matches 'Thing'" in err  # ambiguous, unresolved as today
+
+        class_out, _, code = _run("history", "dup.py::Thing (1-2)", capsys=capsys)
+        assert code == 0
+        assert class_out.splitlines()[0].startswith(
+            "<2 changes in 4 commits touching the file> history of dup.py::Thing@HEAD (1-2)"
+        )
+        assert "add class Thing" in class_out and "class Thing changes its own body" in class_out
+        assert "add function Thing" not in class_out and "function Thing returns 9" not in class_out
+
+        func_out, _, code = _run("history", "dup.py::Thing (5-6)", capsys=capsys)
+        assert code == 0
+        assert func_out.splitlines()[0].startswith(
+            "<2 changes in 4 commits touching the file> history of dup.py::Thing@HEAD (5-6)"
+        )
+        assert "add function Thing" in func_out and "function Thing returns 9" in func_out
+        assert (
+            "add class Thing" not in func_out and "class Thing changes its own body" not in func_out
+        )
+
+        mcp = "".join(p.text for p in server.history("dup.py::Thing (1-2)"))
+        assert mcp == class_out.rstrip("\n")
