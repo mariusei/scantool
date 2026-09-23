@@ -1,6 +1,6 @@
 [project]
 name = "scantool"
-version = "0.28.0"
+version = "0.29.0"
 description = "Code structure for coding agents: classes, functions, callers and headings with line numbers, as an MCP server and the sct shell command. 20+ languages, tree-sitter, no index."
 readme = "README.md"
 requires-python = ">=3.11"
