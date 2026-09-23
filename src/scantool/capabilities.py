@@ -62,6 +62,11 @@ CAPABILITIES: tuple[Capability, ...] = (
         hints=("<dir>",),
         json=False,
         substitutes=(("ls <dir>, find <dir>", "sct <dir>"),),
+        asks=(
+            "an overview of a codebase or repository",
+            "where to start in an unfamiliar project",
+            "entry points and the most-called functions",
+        ),
     ),
     Capability(
         command="scan",
@@ -102,7 +107,7 @@ CAPABILITIES: tuple[Capability, ...] = (
             "read a file's contents",
             "outline of a file",
             "list the functions and classes in a file",
-            "read one function or class by name",
+            "read or show the source of one function, method or class by name",
         ),
     ),
     Capability(
@@ -183,6 +188,11 @@ CAPABILITIES: tuple[Capability, ...] = (
         },
         hints=("diff <ref>", "diff <refA> <refB>"),
         substitutes=(("git diff A..B, git log -L", "sct diff A B, sct history f::name"),),
+        asks=(
+            "what changed between two commits or branches, per function",
+            "review the changes of a pull request or branch",
+            "local changes against HEAD, as structures rather than lines",
+        ),
     ),
     Capability(
         command="surface",
@@ -200,6 +210,11 @@ CAPABILITIES: tuple[Capability, ...] = (
         ),
         tools={"surface": ""},
         hints=("surface <package-dir>", "surface <package-dir> --against REF"),
+        asks=(
+            "the public API of a package or module",
+            "exported names and where each is defined",
+            "API changes between two versions",
+        ),
     ),
     Capability(
         command="overlap",
@@ -219,6 +234,11 @@ CAPABILITIES: tuple[Capability, ...] = (
         ),
         tools={"overlap": ""},
         hints=("overlap <base> <branch>...",),
+        asks=(
+            "do branches conflict or change the same functions",
+            "in which order to merge several branches",
+            "which commits two pull requests share",
+        ),
     ),
     Capability(
         command="callers",
@@ -252,6 +272,10 @@ CAPABILITIES: tuple[Capability, ...] = (
         ),
         tools={"resolve": ""},
         hints=("resolve <path:line> --from REF", "resolve <path::name> --from REF --to REF"),
+        asks=(
+            "where a line or function is at another commit",
+            "map a line number from one commit to another",
+        ),
     ),
     Capability(
         command="divergence",
@@ -266,6 +290,10 @@ CAPABILITIES: tuple[Capability, ...] = (
         tools={"find_divergence": ""},
         hints=("divergence <dir>",),
         json=False,
+        asks=(
+            "functions that break a pattern their siblings follow",
+            "likely missed calls, as a review hint",
+        ),
     ),
     Capability(
         command="history",
@@ -280,6 +308,11 @@ CAPABILITIES: tuple[Capability, ...] = (
         ),
         tools={"history": ""},
         hints=("history <path::name>", "history <path:line> --ref REF"),
+        asks=(
+            "which commits changed this function or class, and when",
+            "git log or git blame for one function",
+            "how a function evolved across commits",
+        ),
     ),
 )
 
