@@ -1,5 +1,6 @@
 """Tests for code map orchestrator."""
 
+import os
 import tempfile
 from pathlib import Path
 
@@ -210,3 +211,54 @@ def test_code_map_performance(temp_project):
 
     # Should complete in under 1 second for 3 files
     assert result.analysis_time < 1.0
+
+
+@pytest.fixture
+def nested_project(tmp_path):
+    """A project with a sub-package, so the `next` part has a directory row."""
+    (tmp_path / "main.py").write_text("from pkg.core import run\n\nrun()\n")
+    pkg = tmp_path / "pkg"
+    pkg.mkdir()
+    (pkg / "__init__.py").write_text("")
+    (pkg / "core.py").write_text("def run():\n    return helper()\n\ndef helper():\n    return 1\n")
+    (pkg / "extra.py").write_text("from pkg.core import helper\n\nhelper()\nhelper()\n")
+    return tmp_path
+
+
+@pytest.mark.parametrize("fixture", ["temp_project", "nested_project"])
+def test_next_steps_speaks_sct(fixture, request, monkeypatch):
+    """The `next` part tells the reader what to run. Its rows are sct commands,
+    pasteable from where the caller stands — not MCP tool names, which drifted
+    here because no test held the text (2026-09-22)."""
+    project = request.getfixturevalue(fixture)
+    monkeypatch.chdir(project.parent)
+    cm = CodeMap(str(project), enable_layer2=True)
+    lines = cm.sections(cm.analyze())["next"]
+    rows = [line.strip() for line in lines if line.strip().startswith("sct ")]
+
+    assert rows, "no command rows in the next part"
+    assert not any(
+        token in line for line in lines for token in ("scan_directory(", "scan_file(", "Read(")
+    ), "MCP tool names in a part the CLI also prints"
+    for row in rows:
+        path = row.split()[2]
+        if "<" not in path:
+            assert (project.parent / path.rstrip("/")).exists(), f"not pasteable: {row}"
+
+
+def test_next_steps_survive_a_directory_on_another_drive(temp_project, monkeypatch):
+    """On Windows, os.path.relpath raises when the scanned directory and the
+    caller sit on different drives; the next part then writes absolute paths
+    instead of failing the whole orientation (seen on CI: C: vs D:)."""
+
+    def no_relative_path(path, start=None):
+        raise ValueError("path is on mount 'C:', start on mount 'D:'")
+
+    cm = CodeMap(str(temp_project), enable_layer2=True)
+    result = cm.analyze()
+    monkeypatch.setattr("scantool.code_map.os.path.relpath", no_relative_path)
+    lines = cm.sections(result)["next"]
+    rows = [line.strip() for line in lines if line.strip().startswith("sct ")]
+    assert rows
+    absolute = str(temp_project.resolve()).replace(os.sep, "/")
+    assert any(absolute in row for row in rows), rows
