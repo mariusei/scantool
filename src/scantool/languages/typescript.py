@@ -259,11 +259,13 @@ class TypeScriptLanguage(BaseLanguage):
             elif node.type in ("function_declaration", "function_signature"):
                 func_node = self._extract_function(node, source_code, root)
                 parent_structures.append(func_node)
+                self._collect_local(node, source_code, root, func_node.children)
 
             # Methods (inside classes)
             elif node.type in ("method_definition", "method_signature"):
                 method_node = self._extract_method(node, source_code)
                 parent_structures.append(method_node)
+                self._collect_local(node, source_code, root, method_node.children)
 
             # Arrow functions (const foo = () => {}) and, at program scope,
             # the file's values (const MAX = 3)
@@ -272,6 +274,7 @@ class TypeScriptLanguage(BaseLanguage):
                     arrow_func = self._extract_arrow_function(node, source_code)
                     if arrow_func:
                         parent_structures.append(arrow_func)
+                        self._collect_local(node, source_code, root, arrow_func.children)
                 if self._at_program_scope(node):
                     parent_structures.extend(self._extract_file_values(node, source_code))
 
@@ -500,15 +503,58 @@ class TypeScriptLanguage(BaseLanguage):
             callee is not None and self._get_node_text(callee, source_code) in self._MODULE_LOADERS
         )
 
+    # Calls that hand back the function literal they are given, so the binding
+    # names that function (React memoises a callback without changing its
+    # shape). Measured on two React codebases: 82 of 306 function bindings
+    # inside function bodies were made this way.
+    FUNCTION_WRAPPERS = ("useCallback",)
+
+    def _function_value(self, value_node: Node | None, source_code: bytes) -> Node | None:
+        """The function literal a binding's value is: an arrow function, a
+        function expression, or one passed to a FUNCTION_WRAPPERS call."""
+        if value_node is None:
+            return None
+        if value_node.type in ("arrow_function", "function_expression"):
+            return value_node
+        if value_node.type == "call_expression":
+            callee = value_node.child_by_field_name("function")
+            args = value_node.child_by_field_name("arguments")
+            name = self._get_node_text(callee, source_code).rsplit(".", 1)[-1] if callee else ""
+            if name in self.FUNCTION_WRAPPERS and args is not None and args.named_children:
+                first = args.named_children[0]
+                if first.type in ("arrow_function", "function_expression"):
+                    return first
+        return None
+
+    def _collect_local(self, node: Node, source_code: bytes, root: Node, into: list) -> None:
+        """Named functions declared inside a function body, as `local`
+        children of the structure that encloses them (the enclosing one of
+        each nested function, at any depth). Anonymous callbacks, a useEffect
+        body or a .map arrow, are walked through."""
+        for child in node.children:
+            local = None
+            if child.type == "function_declaration":
+                local = self._extract_function(child, source_code, root)
+            elif child.type == "lexical_declaration":
+                local = self._extract_arrow_function(child, source_code)
+            elif child.type == "class_declaration":
+                continue
+            if local is None:
+                self._collect_local(child, source_code, root, into)
+                continue
+            local.modifiers.append("local")
+            into.append(local)
+            self._collect_local(child, source_code, root, local.children)
+
     def _extract_arrow_function(self, node: Node, source_code: bytes) -> StructureNode | None:
-        """Extract arrow function assigned to a const/let/var."""
-        # Look for pattern: const/let/var name = () => {}
+        """Extract a function bound to a const/let: `name = () => {}`,
+        `name = function () {}`, `name = useCallback(() => {}, deps)`."""
         for child in node.children:
             if child.type == "variable_declarator":
                 name_node = child.child_by_field_name("name")
-                value_node = child.child_by_field_name("value")
+                value_node = self._function_value(child.child_by_field_name("value"), source_code)
 
-                if value_node and value_node.type == "arrow_function":
+                if value_node is not None:
                     name = self._get_node_text(name_node, source_code) if name_node else "unnamed"
 
                     # Get signature
@@ -984,6 +1030,8 @@ class TypeScriptLanguage(BaseLanguage):
         definitions = []
 
         for node in structures:
+            if node.is_local:
+                continue
             # Include interface type for TypeScript (in addition to class, function, method)
             if node.type in ("class", "function", "method", "interface"):
                 definitions.append(
