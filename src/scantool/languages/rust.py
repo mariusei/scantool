@@ -39,6 +39,8 @@ class RustLanguage(BaseLanguage):
 
     CONDENSE_STRATEGY = "skeleton"
     IMPORT_GROUP_LABEL = "use statements"
+    ATTACHED_PREFIX_TYPES = ("attribute_item",)
+    ATTACHED_PREFIX_SKIP = ("line_comment", "block_comment")
 
     # ── Reachability contract (dead-code detection) ──────────────────────────
     # Off-graph channels the static call graph cannot see in Rust:
@@ -249,7 +251,7 @@ class RustLanguage(BaseLanguage):
         return StructureNode(
             type="struct",
             name=name,
-            start_line=node.start_point[0] + 1,
+            start_line=self._span_start(node),
             end_line=node.end_point[0] + 1,
             signature=signature,
             decorators=attributes,
@@ -283,7 +285,7 @@ class RustLanguage(BaseLanguage):
         return StructureNode(
             type="enum",
             name=name,
-            start_line=node.start_point[0] + 1,
+            start_line=self._span_start(node),
             end_line=node.end_point[0] + 1,
             signature=signature,
             decorators=attributes,
@@ -314,7 +316,7 @@ class RustLanguage(BaseLanguage):
         return StructureNode(
             type="trait",
             name=name,
-            start_line=node.start_point[0] + 1,
+            start_line=self._span_start(node),
             end_line=node.end_point[0] + 1,
             signature=signature,
             decorators=attributes,
@@ -350,7 +352,7 @@ class RustLanguage(BaseLanguage):
         return StructureNode(
             type="impl",
             name=name,
-            start_line=node.start_point[0] + 1,
+            start_line=self._span_start(node),
             end_line=node.end_point[0] + 1,
             signature=signature,
             decorators=attributes,
@@ -387,7 +389,7 @@ class RustLanguage(BaseLanguage):
         return StructureNode(
             type=type_name,
             name=name,
-            start_line=node.start_point[0] + 1,
+            start_line=self._span_start(node),
             end_line=node.end_point[0] + 1,
             signature=signature,
             decorators=attributes,
@@ -439,21 +441,7 @@ class RustLanguage(BaseLanguage):
 
     def _extract_attributes(self, node: Node, source_code: bytes) -> list[str]:
         """Extract attributes like #[derive(...)], #[test], etc."""
-        attributes: list[str] = []
-        prev = node.prev_sibling
-
-        while prev:
-            if prev.type == "attribute_item":
-                attr_text = self._get_node_text(prev, source_code).strip()
-                attributes.insert(0, attr_text)  # Insert at beginning to maintain order
-                prev = prev.prev_sibling
-            elif prev.type in ("line_comment", "block_comment"):
-                # Skip comments
-                prev = prev.prev_sibling
-            else:
-                break
-
-        return attributes
+        return [self._get_node_text(a, source_code).strip() for a in self._attached_prefix(node)]
 
     def _extract_doc_comment(self, node: Node, source_code: bytes) -> str | None:
         """Extract doc comments (/// or /**/)."""

@@ -98,6 +98,18 @@ class StructureNode:
         if self.name and ("\n" in self.name or "\r" in self.name):
             self.name = " ".join(self.name.split())
 
+    def prefix_line_count(self, span_lines: list[str]) -> int:
+        """Lines at the top of this node's span held by its decorators or
+        attributes on lines of their own; 0 when one shares the definition's
+        line (`@Override public void x()`)."""
+        count = 0
+        for decorator in self.decorators:
+            first = decorator.split("\n", 1)[0].strip()
+            if count >= len(span_lines) or span_lines[count].strip() != first:
+                break
+            count += decorator.count("\n") + 1
+        return count
+
     @property
     def is_local(self) -> bool:
         """A named function declared inside another function's body, listed

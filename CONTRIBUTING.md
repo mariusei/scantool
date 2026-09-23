@@ -94,6 +94,10 @@ class YourLanguage(BaseLanguage):
     # IMPORT_GROUP_LABEL - label for grouped imports (e.g. "use statements")
     #   (the group node is created with synthetic=True: its name is scantool's,
     #   not the source's — any container node you create yourself needs the same)
+    # ATTACHED_PREFIX_TYPES (+ ATTACHED_PREFIX_SKIP) - node types that bind to
+    #   the next definition as siblings (decorators, attributes); set start_line
+    #   with self._span_start(node) so the span opens at them and stays
+    #   cut-safe. Not needed when the grammar nests them in the definition node.
 ```
 
 ### Step 3: Test It

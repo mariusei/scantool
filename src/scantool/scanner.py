@@ -415,11 +415,16 @@ class FileScanner:
             # depth-cut — their downgrade path is skeleton → nothing
             is_compact = getattr(language, "CONDENSE_STRATEGY", None) == "compact"
 
+            # The tree already lists a sibling-bound prefix (decorators,
+            # attributes) as rows; the excerpt opens at the definition itself.
+            skip_prefix = bool(getattr(language, "ATTACHED_PREFIX_TYPES", ()))
             items = []
             for node, score in ranked:
                 start_idx = max(0, node.start_line - 1)
                 end_idx = min(len(source_lines), node.end_line)
                 excerpt = source_lines[start_idx:end_idx]
+                if skip_prefix:
+                    excerpt = excerpt[node.prefix_line_count(excerpt) :]
                 skeleton = language.condense_excerpt(excerpt) if language is not None else None
                 items.append((node, score, excerpt, skeleton))
 

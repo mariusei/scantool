@@ -1,7 +1,7 @@
 basic.rs::DatabaseManager.new (22-27)
 basic.rs (3-105)
 - use statements @3
-- User @8 [pub] # User account with basic information.
+- User @7 [pub] # User account with basic information.
    #[derive(Debug, Clone)]
 - DatabaseManager @15 [pub] # Database connection manager.
 - DatabaseManager @20
