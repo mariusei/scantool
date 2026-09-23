@@ -1,5 +1,6 @@
 """Code map orchestrator for analyzing codebase structure and relationships."""
 
+import os
 import threading
 import time
 from collections import OrderedDict, defaultdict
@@ -276,8 +277,6 @@ class CodeMap:
         Returns:
             List of relative file paths
         """
-        import os
-
         from .languages.skip_patterns import should_skip_directory, should_skip_file
 
         files: list[str] = []
@@ -890,7 +889,11 @@ class CodeMap:
         return lines
 
     def _next_section(self, result: CodeMapResult) -> list[str]:
-        """Contextual recommendations: where to drill down next."""
+        """Contextual recommendations: where to drill down next. Each row is a
+        command to paste, so paths are written from the caller's directory,
+        not from the scanned one."""
+        base = os.path.relpath(self.directory, os.getcwd())
+        prefix = "" if base == "." else f"{base}/"
         recommendations = []
 
         files_with_meta = [f for f in result.files if f.mtime > 0]
@@ -904,40 +907,39 @@ class CodeMap:
             }
             for d in sorted(active_dirs)[:2]:
                 recommendations.append(
-                    f'scan_directory("{d}/")  → see code structure inside active area'
+                    f"sct scan {prefix}{d}/  → see code structure inside active area"
                 )
 
         central_files = [f for f in result.files if len(f.imported_by) >= 2]
         if central_files:
             top_central = max(central_files, key=lambda f: len(f.imported_by))
             recommendations.append(
-                f'scan_file("{top_central.path}")  → see functions/classes in core file'
+                f"sct scan {prefix}{top_central.path}  → see functions/classes in core file"
             )
 
         if result.hot_functions:
-            top_func = result.hot_functions[0]
-            parts = top_func.name.split(":")
-            file_path = parts[0] if len(parts) > 1 else "unknown"
-            func_name = parts[1] if len(parts) > 1 else top_func.name
-            recommendations.append(
-                f'Read("{file_path}", offset=N)  → read {func_name}() implementation'
-            )
+            # `file:name`; without the file the address is not typable, so no row.
+            file_path, _, func_name = result.hot_functions[0].name.partition(":")
+            if func_name:
+                recommendations.append(
+                    f"sct focus {prefix}{file_path} {func_name}  → read {func_name}() verbatim"
+                )
 
         if not recommendations:
             recommendations = [
-                'scan_directory("src/")  → see all functions/classes in src/',
-                'scan_file("main.py")  → see structure of a specific file',
+                "sct scan src/  → see all functions/classes in src/",
+                "sct scan main.py  → see structure of a specific file",
             ]
 
         lines = ["  Drill down: overview → structure → code", ""]
         lines.extend(f"    {rec}" for rec in recommendations[:3])
         lines.append("")
-        lines.append("  What each tool gives you:")
-        lines.append("    scan_directory  → functions, classes, line numbers per file")
+        lines.append("  What each command gives you:")
+        lines.append("    sct scan <dir>           → functions, classes, line numbers per file")
         lines.append(
-            "    scan_file       → full structure + signatures + entropy-based code snippets"
+            "    sct scan <file>          → full structure + signatures + entropy-based snippets"
         )
-        lines.append("    Read(offset=N)  → actual source code at specific lines")
+        lines.append("    sct focus <file> <name>  → that function or class verbatim")
         return lines
 
 
