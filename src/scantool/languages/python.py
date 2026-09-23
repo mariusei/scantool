@@ -66,6 +66,9 @@ class PythonLanguage(BaseLanguage):
     - extract_calls(): Find function/method calls
     """
 
+    ATTACHED_PREFIX_TYPES = ("decorator",)
+    ATTACHED_PREFIX_SKIP = ("comment",)
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.parser = Parser()
@@ -357,7 +360,7 @@ class PythonLanguage(BaseLanguage):
         return StructureNode(
             type="class",
             name=name,
-            start_line=node.start_point[0] + 1,
+            start_line=self._span_start(node),
             end_line=node.end_point[0] + 1,
             signature=signature,
             decorators=decorators,
@@ -383,7 +386,7 @@ class PythonLanguage(BaseLanguage):
         return StructureNode(
             type=type_name,
             name=name,
-            start_line=node.start_point[0] + 1,
+            start_line=self._span_start(node),
             end_line=node.end_point[0] + 1,
             signature=signature,
             decorators=decorators,
@@ -415,15 +418,7 @@ class PythonLanguage(BaseLanguage):
 
     def _extract_decorators(self, node: Node, source_code: bytes) -> list[str]:
         """Extract decorators from a function/class definition."""
-        decorators: list[str] = []
-        prev = node.prev_sibling
-
-        while prev and prev.type == "decorator":
-            dec_text = self._get_node_text(prev, source_code).strip()
-            decorators.insert(0, dec_text)
-            prev = prev.prev_sibling
-
-        return decorators
+        return [self._get_node_text(d, source_code).strip() for d in self._attached_prefix(node)]
 
     def _extract_docstring(self, node: Node, source_code: bytes) -> str | None:
         """Extract first line of docstring."""

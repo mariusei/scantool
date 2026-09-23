@@ -31,10 +31,13 @@ def _walk(nodes, ancestors=()):
 
 def _named_in_source(node, lines: list[str]) -> bool:
     """A source name is declared on the structure's first line (def, class,
-    heading, selector, tag). The whole span would make a code block whose
-    text happens to say "code block" look named."""
-    first = lines[node.start_line - 1] if 0 < node.start_line <= len(lines) else ""
-    return node.name in first
+    heading, selector, tag), after the decorators or attributes the span opens
+    with. The whole span would make a code block whose text happens to say
+    "code block" look named."""
+    if not 0 < node.start_line <= len(lines):
+        return False
+    at = node.start_line - 1 + node.prefix_line_count(lines[node.start_line - 1 :])
+    return at < len(lines) and node.name in lines[at]
 
 
 def _sample_files():

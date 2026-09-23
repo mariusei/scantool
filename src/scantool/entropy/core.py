@@ -140,10 +140,13 @@ def select_salient_nodes(
 
 def _candidate_nodes(structures: list) -> list:
     """Collect candidate nodes with leaf preference: a node is a candidate
-    only if none of its descendants are — classes defer to their methods."""
+    only if none of its descendants are — classes defer to their methods.
+    A local function is listed for its address, never excerpted: the body
+    that declares it (a component's hooks and render) keeps its excerpt."""
     found = []
     for node in structures:
-        from_children = _candidate_nodes(node.children) if node.children else []
+        members = [child for child in node.children if not child.is_local]
+        from_children = _candidate_nodes(members) if members else []
         if from_children:
             found.extend(from_children)
         elif node.type not in _SKIP_TYPES and node.name and node.end_line > node.start_line:

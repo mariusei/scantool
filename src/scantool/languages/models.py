@@ -98,6 +98,27 @@ class StructureNode:
         if self.name and ("\n" in self.name or "\r" in self.name):
             self.name = " ".join(self.name.split())
 
+    def prefix_line_count(self, span_lines: list[str]) -> int:
+        """Lines at the top of this node's span held by its decorators or
+        attributes on lines of their own; 0 when one shares the definition's
+        line (`@Override public void x()`)."""
+        count = 0
+        for decorator in self.decorators:
+            first = decorator.split("\n", 1)[0].strip()
+            if count >= len(span_lines) or span_lines[count].strip() != first:
+                break
+            count += decorator.count("\n") + 1
+        return count
+
+    @property
+    def is_local(self) -> bool:
+        """A named function declared inside another function's body, listed
+        so it can be read and focused. It is not a definition of the module:
+        not a call-graph node (a call inside it belongs to the enclosing
+        definition, CONTRIBUTING "caller-resolution contract") and not a
+        code-health candidate."""
+        return "local" in self.modifiers
+
     def __repr__(self):
         return f"{self.type}: {self.name} ({self.start_line}-{self.end_line})"
 
