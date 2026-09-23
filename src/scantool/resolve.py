@@ -21,6 +21,7 @@ SCOPE:
 import difflib
 from dataclasses import dataclass
 
+from .focus import _RANGE
 from .languages import get_registry
 from .scanner import FileScanner
 from .structural_diff import NodeRecord, language_of, read_side, records
@@ -64,10 +65,20 @@ def bare_name(name: str) -> str:
 
 
 def _named(table: dict[str, NodeRecord], name: str) -> NodeRecord | None:
+    """name, optionally with focus's ` (a-b)` / ` (a)` range suffix, which
+    picks the candidate starting at line a among same-named structures."""
+    span = _RANGE.search(name)
+    start = int(span.group(1)) if span else None
+    if span:
+        name = name[: span.start()]
     exact = [r for r in table.values() if r.name == name]
+    if start is not None:
+        exact = [r for r in exact if r.start == start]
     if len(exact) == 1:
         return exact[0]
     leaf = [r for r in table.values() if r.bare == bare_name(name)]
+    if start is not None:
+        leaf = [r for r in leaf if r.start == start]
     return leaf[0] if len(leaf) == 1 else None
 
 

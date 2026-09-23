@@ -81,8 +81,7 @@ def next_steps(
     a long answer is read from the top and cut at the bottom, so a pointer
     placed last is the one that gets lost. Each names what it gives and is
     quoted to paste into a shell. `history` only for a file in a git worktree
-    (in_git, which the server layer knows) and a name that picks one node,
-    where it can answer."""
+    (in_git, which the server layer knows), where it can answer."""
     if target.synthetic:
         return ""
     steps = []
@@ -91,9 +90,11 @@ def next_steps(
         # (Java and Ruby definitions carry no class), the bare one always resolves
         steps.append(f"sct callers {shlex.quote(target.name)} (its call sites)")
     name = address_name(structures, target, ancestors)
-    # history takes no range: a name two structures share (a Rust struct and
-    # its impl) it cannot pick one of, so no pointer there
-    if in_git and len(_resolve(structures, name)) == 1:
+    if in_git:
+        # a name two structures share (a Rust struct and its impl) carries the
+        # range, the form focus and history both accept
+        if len(_resolve(structures, name)) > 1:
+            name += f" ({target.start_line}-{target.end_line})"
         address = shlex.quote(f"{file_path}::{name}")
         steps.append(f"sct history {address} (the commits that changed it)")
     return "next: " + " · ".join(steps) if steps else ""
