@@ -1,5 +1,7 @@
 <1 file seen, 20 structures shown, 1 excluded (.git/)>
 3 hits in 2 structures for /main/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers main (only the real call sites, not comments or strings)
 
 ./basic.rb
 - (module level) @91-91  (2 hits)
@@ -7,6 +9,4 @@
    99 | main if __FILE__ == $PROGRAM_NAME
 - main () @92-97  (1 hit)
    92 | def main
-
-leads: none (no name called in the hits is defined in another scanned file)
 [exit 0]

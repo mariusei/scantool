@@ -1,5 +1,7 @@
 <1 file seen, 21 structures shown, 1 excluded (.git/)>
 3 hits in 2 structures for /tryConnect/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers tryConnect (only the real call sites, not comments or strings)
 
 ./Basic.java
 - ConnectionRetrier > retryConnect (DatabaseManager db) : boolean @116-123  (2 hits)
@@ -7,6 +9,4 @@
    118 | if (tryConnect(db)) {
 - ConnectionRetrier > tryConnect (DatabaseManager db) : boolean @125-128  (1 hit)
    125 | private static boolean tryConnect(DatabaseManager db) {
-
-leads: none (no name called in the hits is defined in another scanned file)
 [exit 0]

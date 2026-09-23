@@ -1,4 +1,5 @@
 basic.json::scripts.build (6-6)
+next: sct history basic.json::scripts.build (the commits that changed it)
 basic.json (2-20)
 - name "demo-app" @2
 - version "1.2.3" @3

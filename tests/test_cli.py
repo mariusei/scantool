@@ -123,7 +123,8 @@ def test_focus_hit_miss_and_ambiguity(capsys):
     assert code == 1 and "matches no node" in out
 
     out, _, code = run("focus", str(FOCUS_MODULE), "_", capsys=capsys)
-    assert code == 1 and "is ambiguous" in out and "_resolve (" in out
+    # the candidates are listed with their ranges (the first ten, in file order)
+    assert code == 1 and "is ambiguous" in out and "format_focus (" in out
 
     out, _, code = run("focus", "no-such-file.py", "x", capsys=capsys)
     assert code == 1 and "no such file" in out
@@ -147,7 +148,9 @@ def test_focus_matches_a_heading_substring(capsys):
     assert code == 0
     # the shell door opens with the address; the body is the frozen contract
     assert out.splitlines()[0] == f'{MARKDOWN_SAMPLE}::"{leaf}" (13-23)'
-    assert out.splitlines()[1:] == golden.splitlines()[1:]
+    # a file on disk in the repo: the shell door adds its history pointer
+    assert out.splitlines()[1].startswith("next: sct history ")
+    assert out.splitlines()[2:] == golden.splitlines()[1:]
 
 
 def test_search_text_names_type_json_and_no_match(capsys):
@@ -238,7 +241,9 @@ def test_focus_on_stdin_content(monkeypatch, capsys):
     golden = (GOLDEN_DIR / "focus_python.txt").read_text(encoding="utf-8")
     assert code == 0
     assert out.splitlines()[0] == "basic.py::DatabaseManager.query (24-26)"
-    assert out.splitlines()[1:] == golden.splitlines()[1:]
+    # stdin content has no file to follow through git: callers, no history
+    assert out.splitlines()[1] == "next: sct callers query (its call sites)"
+    assert out.splitlines()[2:] == golden.splitlines()[2:]
 
 
 def test_stdin_usage_errors_exit_2(monkeypatch, capsys):

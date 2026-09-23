@@ -1,9 +1,9 @@
 <1 file seen, 18 structures shown, 1 excluded (.git/)>
 1 hits in 1 structures for /queue_depth/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers queue_depth (only the real call sites, not comments or strings)
 
 ./basic.toml
 - limits > queue_depth 64 @25-25  (1 hit)
    25 | queue_depth = 64
-
-leads: none (no name called in the hits is defined in another scanned file)
 [exit 0]

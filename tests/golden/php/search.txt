@@ -1,5 +1,7 @@
 <1 file seen, 26 structures shown, 1 excluded (.git/)>
 10 hits in 6 structures for /attempt/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers attempt (only the real call sites, not comments or strings)
 
 ./basic.php
 - Retrier @142-167  (3 hits)
@@ -18,6 +20,4 @@
    137 | const DEFAULT_ATTEMPTS = 3;
 - Retrier > attempt (callable $action) bool @164-166  (1 hit)
    164 | private function attempt(callable $action): bool {
-
-leads: none (no name called in the hits is defined in another scanned file)
 [exit 0]

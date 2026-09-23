@@ -1,5 +1,7 @@
 <1 file seen, 13 structures shown, 1 excluded (.git/)>
 4 hits in 3 structures for /clamp/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers clamp (only the real call sites, not comments or strings)
 
 ./basic.zig
 - (module level) @63-63  (2 hits)
@@ -9,6 +11,4 @@
    37 | try stdout.print("Hello, {s}! {d}\n", .{ "World", clamp(helper(2, 3), 0, max_value) });
 - clamp (value: i32, lower: i32, upper: i32) i32 @67-71  (1 hit)
    67 | fn clamp(value: i32, lower: i32, upper: i32) i32 {
-
-leads: none (no name called in the hits is defined in another scanned file)
 [exit 0]

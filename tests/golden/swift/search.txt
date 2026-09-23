@@ -1,11 +1,11 @@
 <1 file seen, 35 structures shown, 1 excluded (.git/)>
 2 hits in 2 structures for /retry/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers retry (only the real call sites, not comments or strings)
 
 ./basic.swift
 - UserService > deleteUser (id: Int) throws @98-100  (1 hit)
    99 | _ = retry({ db.isConnected })
 - retry (_ action: () -> Bool, attempts: Int) -> Bool @123-128  (1 hit)
    123 | private func retry(_ action: () -> Bool, attempts: Int = defaultAttempts) -> Bool {
-
-leads: none (no name called in the hits is defined in another scanned file)
 [exit 0]

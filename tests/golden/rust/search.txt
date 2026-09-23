@@ -1,11 +1,11 @@
 <1 file seen, 19 structures shown, 1 excluded (.git/)>
 2 hits in 2 structures for /retry/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers retry (only the real call sites, not comments or strings)
 
 ./basic.rs
 - main () @85-92  (1 hit)
    89 | retry(&mut || db.connect().is_ok(), MAX_ATTEMPTS);
 - retry (action: &mut dyn FnMut() -> bool, attempts: u32) -> bool @98-105  (1 hit)
    98 | fn retry(action: &mut dyn FnMut() -> bool, attempts: u32) -> bool {
-
-leads: none (no name called in the hits is defined in another scanned file)
 [exit 0]

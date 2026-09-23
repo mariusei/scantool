@@ -1,9 +1,9 @@
 <1 file seen, 14 structures shown, 1 excluded (.git/)>
 1 hits in 1 structures for /report/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers report (only the real call sites, not comments or strings)
 
 ./basic.ipynb
 - cell 4 (code) > report (ledger) @62-64  (1 hit)
    62 | "def report(ledger):\n",
-
-leads: none (no name called in the hits is defined in another scanned file)
 [exit 0]

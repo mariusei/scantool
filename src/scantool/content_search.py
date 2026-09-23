@@ -288,6 +288,23 @@ def format_hits(
     lines = [f"{total_hits} hits in {len(found)} structures for /{pattern}/"]
     if page:
         lines.append(page)
+    # Leads and the next step sit under the header, not after the hits: a long
+    # answer is read from the top and cut at the bottom.
+    if leads:
+        # full path — the agent should be able to follow the lead with one scan_file call
+        lines.append(
+            "leads (called in hits, defined elsewhere): "
+            + ", ".join(
+                f"{name} → " + " / ".join(f"{file}:{line}" for file, line in targets)
+                for name, targets in leads
+            )
+        )
+    else:
+        lines.append("leads: none (no name called in the hits is defined in another scanned file)")
+    if _IDENTIFIER.fullmatch(pattern):
+        lines.append(
+            f"next: sct callers {pattern} (only the real call sites, not comments or strings)"
+        )
 
     current_file = None
     for node_hits in shown:
@@ -301,21 +318,11 @@ def format_hits(
             f"({len(node_hits.hits)} hit{'' if len(node_hits.hits) == 1 else 's'})"
         )
         lines.extend(_hit_lines(node_hits))
-
-    if leads:
-        # full path — the agent should be able to follow the lead with one scan_file call
-        lines.append(
-            "\nleads (called in hits, defined elsewhere): "
-            + ", ".join(
-                f"{name} → " + " / ".join(f"{file}:{line}" for file, line in targets)
-                for name, targets in leads
-            )
-        )
-    else:
-        lines.append(
-            "\nleads: none (no name called in the hits is defined in another scanned file)"
-        )
     return "\n".join(lines)
+
+
+# A pattern that is a plain (dotted) name: its call sites are what `callers` answers
+_IDENTIFIER = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*")
 
 
 def hits_to_json(

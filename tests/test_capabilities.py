@@ -33,8 +33,8 @@ def test_the_instructions_block_is_the_table():
     text = server.mcp.instructions or ""
     for entry in capabilities.CAPABILITIES:
         assert entry.short in text, entry.command
-        for habit, form in entry.substitutes:
-            assert habit in text and form in text, habit
+        for habit, form, gain in entry.substitutes:
+            assert habit in text and form in text and gain in text, habit
 
 
 def test_readme_usage_block_matches_the_table():

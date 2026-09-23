@@ -1,9 +1,9 @@
 <1 file seen, 15 structures shown, 1 excluded (.git/)>
 1 hits in 1 structures for /_comment/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers _comment (only the real call sites, not comments or strings)
 
 ./basic.json
 - _comment "JSON has no comments; a leading underscore is ... @20-20  (1 hit)
    20 | "_comment": "JSON has no comments; a leading underscore is the idiom for one"
-
-leads: none (no name called in the hits is defined in another scanned file)
 [exit 0]

@@ -1,4 +1,5 @@
 basic.c::User (8-12)
+next: sct history basic.c::User (the commits that changed it)
 basic.c (3-83)
 - #include directives @3
 - User @8 # User structure definition

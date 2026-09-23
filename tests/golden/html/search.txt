@@ -1,9 +1,8 @@
 <1 file seen, 24 structures shown, 1 excluded (.git/)>
 1 hits in 1 structures for /site\-meta/
+leads: none (no name called in the hits is defined in another scanned file)
 
 ./basic.html
 - site-meta 0 items @82-87  (1 hit)
    82 | <dl id="site-meta">
-
-leads: none (no name called in the hits is defined in another scanned file)
 [exit 0]

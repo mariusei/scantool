@@ -1,5 +1,6 @@
 <1 file seen, 30 structures shown, 1 excluded (.git/)>
 4 hits in 4 structures for /\.card/
+leads: none (no name called in the hits is defined in another scanned file)
 
 ./basic.scss
 - .card 1 sel, 3 decl @83-96  (1 hit)
@@ -10,6 +11,4 @@
    93 | .card-body {
 - .theme-dark > .card 1 sel, 2 decl @134-137  (1 hit)
    134 | .card {
-
-leads: none (no name called in the hits is defined in another scanned file)
 [exit 0]
