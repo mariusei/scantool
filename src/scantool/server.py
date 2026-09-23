@@ -1339,12 +1339,10 @@ def search_structures(
                         ),
                     )
                 ]
-            return [
-                TextContent(
-                    type="text",
-                    text=header + format_hits(found, content_pattern, leads, limit, offset),
-                )
-            ]
+            answer = format_hits(found, content_pattern, leads, limit, offset)
+            if not found:
+                answer = "\n".join([answer, *_empty_content_hints(results, content_pattern)])
+            return [TextContent(type="text", text=header + answer)]
 
         # Filter structures
         matching = {}
@@ -1364,10 +1362,21 @@ def search_structures(
                 matching[file_path] = filtered
 
         if not matching:
-            text = "No structures found matching the criteria"
+            criteria = {
+                "name": name_pattern and f"/{name_pattern}/",
+                "type": type_filter,
+                "decorator": has_decorator and f"/{has_decorator}/",
+                "lines ≥": min_complexity,
+            }
+            text = "No structures found matching the criteria: " + ", ".join(
+                f"{key} {value}" for key, value in criteria.items() if value
+            )
             if name_pattern:
                 text += _paths_matching(results, name_pattern, directory)
-            return [TextContent(type="text", text=header + text)]
+            hints = _empty_names_hints(
+                results, name_pattern, type_filter, has_decorator, min_complexity
+            )
+            return [TextContent(type="text", text=header + "\n".join([text, *hints]))]
 
         # Format output
         if output_format == "json":
@@ -1448,6 +1457,52 @@ def _paths_matching(results: dict, name_pattern: str, scope: str) -> str:
     more = f", … {len(seen) - _PATHS_BY_NAME_CAP} more" if len(seen) > _PATHS_BY_NAME_CAP else ""
     verb = "matches" if len(seen) == 1 else "match"
     return f"; {len(seen)} path{'' if len(seen) == 1 else 's'} {verb} by name: {listed}{more}"
+
+
+def _count_by_name(results: dict, name_pattern: str) -> int:
+    return sum(
+        len(_filter_structures(nodes, name_pattern=name_pattern))
+        for nodes in results.values()
+        if nodes
+    )
+
+
+def _empty_names_hints(
+    results: dict,
+    name_pattern: str | None,
+    type_filter: str | None,
+    has_decorator: str | None,
+    min_complexity: int | None,
+) -> list[str]:
+    """What an empty structure search would have found under another reading,
+    so "none" is not taken for "not there": names that the other filters
+    removed, and the same pattern as text."""
+    if not name_pattern:
+        return []
+    hints = []
+    if type_filter or has_decorator or min_complexity:
+        named = _count_by_name(results, name_pattern)
+        if named:
+            hints.append(f"{named} structures match the name alone; the other criteria leave none")
+    found = search_content(results, name_pattern)
+    if found:
+        hits = sum(len(n.hits) for n in found)
+        hints.append(
+            f"the same pattern matches text: {hits} hits in {len(found)} structures "
+            "(drop --names / use content_pattern)"
+        )
+    return hints
+
+
+def _empty_content_hints(results: dict, content_pattern: str) -> list[str]:
+    """An empty text search whose pattern names structures says so."""
+    try:
+        named = _count_by_name(results, content_pattern)
+    except re.error:
+        return []
+    if not named:
+        return []
+    return [f"{named} structure names match /{content_pattern}/ (add --names / use name_pattern)"]
 
 
 def _filter_structures(
