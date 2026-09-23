@@ -146,3 +146,43 @@ def test_json_carries_page_and_more_lines(tmp_path, capsys):
     assert (document["limit"], document["offset"], document["structures_omitted"]) == (2, 1, 1)
     assert [os.path.basename(s["file"]) for s in document["structures"]] == ["m01.py", "m02.py"]
     assert all("more_lines" in s for s in document["structures"])
+
+
+# ── empty answers say what another reading would find ────────────────────────
+# An agent reads an empty answer as "not there" and leaves the tool (a field
+# report: `--names` on call names came back empty, grep followed).
+
+_ROUTES = "import functools\n\n\n@functools.cache\ndef handler():\n    return add_source()\n"
+
+
+def test_empty_names_search_counts_the_text_hits(tmp_path, capsys):
+    (tmp_path / "app.py").write_text(_ROUTES)
+    out, _, code = run("search", str(tmp_path), "add_source", "--names", capsys=capsys)
+    assert code == 1
+    assert "No structures found matching the criteria: name /add_source/" in out
+    assert "the same pattern matches text: 1 hits in 1 structures" in out
+
+
+def test_empty_names_search_says_the_other_criteria_removed_the_names(tmp_path, capsys):
+    (tmp_path / "app.py").write_text(_ROUTES)
+    out, _, code = run(
+        "search", str(tmp_path), "handler", "--names", "--decorator", "route", capsys=capsys
+    )
+    assert code == 1
+    assert "name /handler/, decorator /route/" in out
+    assert "1 structures match the name alone; the other criteria leave none" in out
+
+
+def test_empty_text_search_counts_the_structure_names(tmp_path, capsys):
+    (tmp_path / "app.py").write_text(_ROUTES)
+    out, _, code = run("search", str(tmp_path), "^handler$", capsys=capsys)
+    assert code == 1
+    assert "No content matches for /^handler$/" in out
+    assert "1 structure names match /^handler$/ (add --names" in out
+
+
+def test_an_empty_answer_with_nothing_elsewhere_adds_no_hint(tmp_path, capsys):
+    (tmp_path / "app.py").write_text(_ROUTES)
+    out, _, code = run("search", str(tmp_path), "zzqq_nowhere", "--names", capsys=capsys)
+    assert code == 1
+    assert out.rstrip().endswith("No structures found matching the criteria: name /zzqq_nowhere/")
