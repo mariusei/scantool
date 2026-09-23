@@ -51,7 +51,11 @@ def test_every_pointer_is_true(lang, capsys):
         if "history" in steps:
             assert cli.main(["focus", steps["history"]]) == 0, (lang, steps["history"])
             header = capsys.readouterr().out.splitlines()[0]
-            assert header.startswith(steps["history"] + " ("), (lang, header)
+            # the address is the header, with its range when the name is shared
+            assert header == steps["history"] or header.startswith(steps["history"] + " ("), (
+                lang,
+                header,
+            )
         checked += 1
         if checked == _PER_SAMPLE:
             break
