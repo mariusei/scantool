@@ -356,12 +356,12 @@ class TestDiffParts:
         out, err, code = run(
             "surface", "pkg", "--ref", "main", "--against", "next", "--part", "nope", capsys=capsys
         )
-        assert code == 2 and out == ""
+        assert code == 2 and out.endswith("(exit 2)\n")  # the error on stdout too
         assert "unknown part 'nope'; parts: added, changed, moved, removed" in err
 
     def test_part_without_against_is_a_usage_error(self, versioned, capsys):
         out, err, code = run("surface", "pkg", "--part", "added", capsys=capsys)
-        assert code == 2 and out == ""
+        assert code == 2 and out.endswith("(exit 2)\n")  # the error on stdout too
         assert "--part goes with --against" in err
 
     def test_the_mcp_tool_takes_part(self, versioned, capsys):
