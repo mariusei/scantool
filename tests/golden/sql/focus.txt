@@ -1,4 +1,5 @@
 basic.sql::users.id (5-5)
+edges: no blank line above, no blank line below, then username (6)
 next: sct history basic.sql::users.id (the commits that changed it)
 basic.sql (4-43)
 - users @4 # Users table to store user information

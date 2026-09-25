@@ -1,4 +1,5 @@
 basic.md::"Installation" (5-23)
+edges: 4 blank above, no blank line below, then Features (24)
 next: sct history 'basic.md::"Installation"' (the commits that changed it)
 basic.md (1-129)
 - Project Documentation @1 # This is a sample Markdown file for testing the scanner.

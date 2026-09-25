@@ -53,6 +53,7 @@ def format_focus(
     else:
         qualified = ".".join(node.name for node in (*ancestors, target))
         header = f"focus: {qualified} @{target.start_line}-{target.end_line}"
+    header += "\n" + edges_line(structures, target, ancestors, source_lines)
     if body_only:
         return header + "\n" + "\n".join(_numbered(target, source_lines))
     path_ids = {id(node) for node in (*ancestors, target)}
@@ -119,7 +120,7 @@ def focus_to_json(
         return _resolution_error(structures, focus, matches)
     target, ancestors = matches[0]
     name = address_name(structures, target, ancestors)
-    document = {
+    document: dict[str, object] = {
         "address": f"{file_path}::{name}",
         "ref": None,
         "path": file_path,
@@ -132,11 +133,65 @@ def focus_to_json(
         "docstring": target.docstring,
         "body": "\n".join(source_lines[target.start_line - 1 : target.end_line]),
     }
+    above, below, after, at_end = _edges(structures, target, ancestors, source_lines)
+    document["blank_above"] = list(above) if above else None
+    document["blank_below"] = list(below) if below else None
+    document["next_sibling"] = (
+        {"name": after.name, "start_line": after.start_line} if after else None
+    )
+    document["end_of_file"] = at_end
     if not body_only:
         path_ids = {id(node) for node in (*ancestors, target)}
         pruned = _prune(structures, target, path_ids, source_lines)
         document["context"] = structures_to_json(pruned, file_path, return_dict=True)["structures"]
     return document
+
+
+def _edges(
+    structures: list[StructureNode],
+    target: StructureNode,
+    ancestors: tuple,
+    source_lines: list[str],
+) -> tuple[tuple[int, int] | None, tuple[int, int] | None, StructureNode | None, bool]:
+    """The blank lines right above and below the node (whitespace only), the
+    sibling that starts after the blank lines below if one does, and whether
+    nothing but blank lines follows (end of file)."""
+    lines = source_lines[:-1] if source_lines and source_lines[-1] == "" else source_lines
+
+    def first_filled(line: int, step: int) -> int:
+        while 1 <= line <= len(lines) and not lines[line - 1].strip():
+            line += step
+        return line
+
+    top = first_filled(target.start_line - 1, -1)
+    bottom = first_filled(target.end_line + 1, 1)
+    above = (top + 1, target.start_line - 1) if top < target.start_line - 1 else None
+    below = (target.end_line + 1, bottom - 1) if bottom > target.end_line + 1 else None
+    siblings = ancestors[-1].children if ancestors else structures
+    after = next((n for n in siblings if n.start_line == bottom and n is not target), None)
+    return above, below, after, bottom > len(lines)
+
+
+def edges_line(
+    structures: list[StructureNode],
+    target: StructureNode,
+    ancestors: tuple,
+    source_lines: list[str],
+) -> str:
+    """What sits right outside the span, for an edit that takes the node out
+    or replaces it: the agent otherwise re-reads the edges to see them."""
+    above, below, after, at_end = _edges(structures, target, ancestors, source_lines)
+
+    def span(pair: tuple[int, int]) -> str:
+        return str(pair[0]) if pair[0] == pair[1] else f"{pair[0]}-{pair[1]}"
+
+    parts = [f"{span(above)} blank above" if above else "no blank line above"]
+    parts.append(f"{span(below)} blank below" if below else "no blank line below")
+    if after:
+        parts.append(f"then {after.name} ({after.start_line})")
+    elif at_end:
+        parts.append("then end of file")
+    return "edges: " + ", ".join(parts)
 
 
 def _numbered(target: StructureNode, source_lines: list[str]) -> list[str]:

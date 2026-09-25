@@ -1,4 +1,5 @@
 basic.rb::DataAccess.DatabaseManager (10-38)
+edges: no blank line above, no blank line below
 next: sct callers DatabaseManager (its call sites) · sct history basic.rb::DataAccess.DatabaseManager (the commits that changed it)
 basic.rb (3-97)
 - require statements @3

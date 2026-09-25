@@ -1,4 +1,5 @@
 focus: DatabaseManager.query @24-26
+edges: 23 blank above, 27-28 blank below
 next: sct callers query (its call sites)
 basic.py (1-71)
 - module docstring @1 # Example Python file for testing the scanner.

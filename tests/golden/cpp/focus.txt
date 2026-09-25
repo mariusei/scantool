@@ -1,4 +1,5 @@
 basic.cpp::utils.validate_email (12-14)
+edges: no blank line above, 15 blank below
 next: sct callers validate_email (its call sites) · sct history basic.cpp::utils.validate_email (the commits that changed it)
 basic.cpp (3-151)
 - #include directives @3

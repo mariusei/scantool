@@ -1,4 +1,5 @@
 focus: Project Documentation.Installation.Quick Start @13-23
+edges: 12 blank above, no blank line below
 basic.md (1-129)
 - Project Documentation @1 # This is a sample Markdown file for testing the scanner.
   - Installation @5 # To install the package, run:

@@ -1,4 +1,5 @@
 basic.ts::AuthService.constructor (26-29)
+edges: no blank line above, 30 blank below
 next: sct callers constructor (its call sites) · sct history basic.ts::AuthService.constructor (the commits that changed it)
 basic.ts (5-131)
 - import statements @5

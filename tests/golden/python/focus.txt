@@ -1,4 +1,5 @@
 basic.py::DatabaseManager.__init__ (11-13)
+edges: 10 blank above, 14 blank below, then connect (15)
 next: sct callers __init__ (its call sites) · sct history basic.py::DatabaseManager.__init__ (the commits that changed it)
 basic.py (1-71)
 - module docstring @1 # Example Python file for testing the scanner.

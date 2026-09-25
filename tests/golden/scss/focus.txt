@@ -1,4 +1,5 @@
 basic.scss::.btn.&--secondary (67-69)
+edges: 66 blank above, 70 blank below, then &--outline (71)
 next: sct history 'basic.scss::.btn.&--secondary' (the commits that changed it)
 basic.scss (3-138)
 - base/variables @use @3 [use]

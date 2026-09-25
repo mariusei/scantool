@@ -1,4 +1,5 @@
 basic.go::Config (10-13)
+edges: no blank line above, 14 blank below
 next: sct history basic.go::Config (the commits that changed it)
 basic.go (4-104)
 - import statements @4

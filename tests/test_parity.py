@@ -177,7 +177,10 @@ class TestFocusBody:
         sample = tmp_path / "mod.py"
         sample.write_text(V1)
         out, code = _cli("focus", str(sample), "beta", "--body", capsys=capsys)
-        assert code == 0 and out == f"{sample}::beta (5-6)\n5 | def beta():\n6 |     return 2"
+        assert code == 0 and out == (
+            f"{sample}::beta (5-6)\nedges: 3-4 blank above, no blank line below, then end of file\n"
+            "5 | def beta():\n6 |     return 2"
+        )
         mcp = _mcp(
             server.scan_file(
                 file_path=str(sample), focus="beta", body_only=True, include_metadata=False
