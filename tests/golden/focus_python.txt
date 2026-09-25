@@ -1,8 +1,7 @@
 focus: DatabaseManager.query @24-26
+edges: 23 blank above, 27-28 blank below
 next: sct callers query (its call sites)
-basic.py (1-71)
-- module docstring @1 # Example Python file for testing the scanner.
-- import statements @3
+basic.py (1-75)
 - DatabaseManager @8 # Manages database connections and queries.
   - __init__ (self, connection_string: str) @11
   - connect (self) @15 # Establish database connection.
@@ -11,9 +10,3 @@ basic.py (1-71)
      24 |     def query(self, sql: str) -> list:
      25 |         """Execute a SQL query."""
      26 |         return []
-- UserService @29 # Handles user-related operations.
-- validate_email (email: str) -> bool @48 # Validate email format.
-- DEFAULT_TIMEOUT = 30 @53
-- RETRY_POLICY = {'attempts': 3, 'backoff': 'exponential'} @54
-- _retry (action, attempts: int = RETRY_POLICY["attempts"]) @57 # Run action until it succeeds or the attempts are spent (internal).
-- main () @65 # Main entry point.

@@ -89,7 +89,7 @@ CAPABILITIES: tuple[Capability, ...] = (
             "scan_file": (
                 " One file; budget=1500 for exploration, 300 for a quick look; focus='name' "
                 "(or 'Class.method') reads one node verbatim instead of guessing line ranges, "
-                "body_only=True without the file outline; "
+                "body_only=True without the parent context; "
                 "ref= reads it at a git ref. May append a self-levelling CONNECTIVITY note "
                 "(candidate dead/orphan/drift across the corpus, silent when clean)."
             ),
@@ -125,8 +125,9 @@ CAPABILITIES: tuple[Capability, ...] = (
             "(Class.method), a heading or a substring of a heading. Several matches "
             "list themselves with their ranges and a range picks one; none lists the "
             "top-level names. The answer opens with the node's address, "
-            "`path::Qualified.name (a-b)`, which focus accepts back. --body is the "
-            "header and the node's numbered lines alone, no outline."
+            "`path::Qualified.name (a-b)`, which focus accepts back, then the blank "
+            "lines and the neighbour right outside it (edges:). --body is those two "
+            "lines and the node's numbered lines alone, no parent context."
         ),
         hints=("focus <path> <name>", "focus <path>::<name>@REF"),
         substitutes=(("git show REF:f | sed -n", "sct focus f::name@REF", "no guessed range"),),

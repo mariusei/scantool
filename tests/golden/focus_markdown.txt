@@ -1,5 +1,6 @@
 focus: Project Documentation.Installation.Quick Start @13-23
-basic.md (1-129)
+edges: 12 blank above, no blank line below
+basic.md (1-128)
 - Project Documentation @1 # This is a sample Markdown file for testing the scanner.
   - Installation @5 # To install the package, run:
     - code block (bash) bash @9
@@ -20,4 +21,3 @@ basic.md (1-129)
   - API Reference @61 # Main components of the system.
   - Contributing @77 # Guidelines for contributors.
   - License @93 # MIT License
-- Alternative Heading Style @99 # This is a level 1 heading using Setext style.

@@ -1,25 +1,10 @@
 basic.go::Config (10-13)
+edges: no blank line above, 14 blank below
 next: sct history basic.go::Config (the commits that changed it)
-basic.go (4-104)
-- import statements @4
+basic.go (1-104)
 - Config @10 [public] # Config holds application configuration
    10 | type Config struct {
    11 | 	Host string
    12 | 	Port int
    13 | }
-- Logger @16 [public] # Logger is an interface for logging operations
-- DatabaseManager @22 [public] # DatabaseManager manages database connections and queries
-- NewDatabaseManager (connStr string) *DatabaseManager @28 [public] # NewDatabaseManager creates a new DatabaseManager instance
-- Connect (db *DatabaseManager) () error @36 [public] # Connect establishes database connection
-- Disconnect (db *DatabaseManager) () @43 [public] # Disconnect closes database connection
-- Query (db *DatabaseManager) (sql string) ([]map[string]interface{}, error) @51 [public] # Query executes a SQL query and returns results
-- UserService @56 [public] # UserService handles user-related operations
-- CreateUser (s *UserService) (username, email string) (int, error) @61 [public] # CreateUser creates a new user in the database
-- GetUser (s *UserService) (userID int) (map[string]interface{}, error) @66 [public] # GetUser retrieves user by ID
-- DeleteUser (s *UserService) (userID int) error @71 [public] # DeleteUser deletes a user by ID
-- ValidateEmail (email string) bool @76 [public] # ValidateEmail validates email format
-- FormatTimestamp (t time.Time) string @81 [public] # FormatTimestamp formats a timestamp to string
-- main () @86 # main is the entry point
-- MaxRetries = 3 @93 [public] # MaxRetries is the retry budget for connection attempts
-- retryConnect (db *DatabaseManager) error @96 # retryConnect retries the connection until it succeeds or the budget is spent (internal)
 [exit 0]

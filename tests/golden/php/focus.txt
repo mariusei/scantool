@@ -1,18 +1,10 @@
 basic.php::DatabaseConfig.getHost (16-16)
+edges: no blank line above, no blank line below, then getPort (17)
 next: sct callers getHost (its call sites) · sct history basic.php::DatabaseConfig.getHost (the commits that changed it)
-basic.php (6-167)
-- App\Database @6
-- use statements @8
+basic.php (1-167)
 - DatabaseConfig @15 # Configuration interface for database settings.
   - getHost () string @16 [public]
      16 |     public function getHost(): string;
   - getPort () int @17 [public]
   - getDatabase () string @18 [public]
-- DatabaseManager @24 # Manages database connections and queries.
-- Loggable @63 # Trait for logging functionality.
-- UserService @84 # Handles user-related operations.
-- validateEmail (string $email) bool @123 # Validates an email address format.
-- formatName (string $firstName, string $lastName) string @130 # Formats a user's full name.
-- DEFAULT_ATTEMPTS = 3 @137
-- Retrier @142 # Retries an action a bounded number of times.
 [exit 0]

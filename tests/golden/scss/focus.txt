@@ -1,33 +1,11 @@
 basic.scss::.btn.&--secondary (67-69)
+edges: 66 blank above, 70 blank below, then &--outline (71)
 next: sct history 'basic.scss::.btn.&--secondary' (the commits that changed it)
-basic.scss (3-138)
-- base/variables @use @3 [use]
-- base/mixins @use @4 [use]
-- components/buttons @forward @5 [forward]
-- legacy/old-styles @import @6 [import]
-- $primary-color #3498db @9 [scss-variable]
-- $secondary-color #2ecc71 @10 [scss-variable]
-- $font-stack 'Helvetica Neue', sans-serif @11 [scss-variable]
-- $spacing-unit 8px @12 [scss-variable]
-- $border-radius 4px @13 [scss-variable]
-- flex-center () @16 [mixin]
-- button-style ($bg-color, $text-color: white) @22 [mixin]
-- responsive ($breakpoint) @34 [mixin]
-- shade ($color, $amount: 10%) @47 [scss-function]
-- tint ($color, $amount: 10%) @51 [scss-function]
-- body 1 sel, 4 decl @56
+basic.scss (1-138)
 - .btn 1 sel, 0 decl @64 [class uses-mixin]
   - &--secondary 1 sel, 0 decl @67 [nested uses-mixin]
      67 |     &--secondary {
      68 |         @include button-style($secondary-color);
      69 |     }
   - &--outline 1 sel, 3 decl @71 [nested]
-- .card 1 sel, 3 decl @83 [class]
-- .container 1 sel, 2 decl @99 [class uses-mixin]
-- screen and (max-width: 768px) screen and (max-width: 768px) @110 [media]
-- fadeIn @117 [keyframes]
-- Theme overrides @126 # /*! Theme overrides
-   Loaded last so they win the cascade. */
-- $accent-color #e67e22 @128 [scss-variable]
-- .theme-dark 1 sel, 2 decl @130 [class]
 [exit 0]

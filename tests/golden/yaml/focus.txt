@@ -1,6 +1,7 @@
 basic.yaml::document 1.on.push (6-7)
+edges: no blank line above, no blank line below, then pull_request (8)
 next: sct history 'basic.yaml::document 1.on.push' (the commits that changed it)
-basic.yaml (1-51)
+basic.yaml (1-50)
 - document 1 @1
   - name sample-workflow @1
   - shared_timeout 10 @3 [anchor:timeout]
@@ -11,5 +12,4 @@ basic.yaml (1-51)
     - pull_request 0 keys @8
   - jobs 2 keys @10
   - notes > This is a folded block scalar describing the workflow a... @32 [folded]
-- document 2 @35
 [exit 0]

@@ -1,18 +1,11 @@
 basic.cpp::utils.validate_email (12-14)
+edges: no blank line above, 15 blank below
 next: sct callers validate_email (its call sites) · sct history basic.cpp::utils.validate_email (the commits that changed it)
-basic.cpp (3-151)
-- #include directives @3
+basic.cpp (1-151)
 - utils @9 # Utility namespace
   - validate_email bool (const std::string& email) @12 # Validate email format
      12 | bool validate_email(const std::string& email) {
      13 |     return email.find('@') != std::string::npos;
      14 | }
   - format_name std::string (const std::string& first, const std::string& last) @17 # Format user name
-- database @24 # Database namespace
-- UserService @71 # User service class
-- Status @113 # Status enumeration
-- max_value T (T a, T b) @121
-- MAX_RETRIES = 3 @126 [constexpr] # Retry budget for connection attempts
-- retry_connect bool (database::DatabaseManager& db) @129 [static] # Retry the connection until it succeeds or the budget is spent (internal)
-- main int () @139 # Main entry point
 [exit 0]

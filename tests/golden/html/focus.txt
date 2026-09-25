@@ -1,8 +1,7 @@
 basic.html::"Main navigation" (13-19)
+edges: no blank line above, no blank line below
 next: sct history 'basic.html::"Main navigation"' (the commits that changed it)
-basic.html (1-87)
-- DOCTYPE @1
-- app.js scripts/app.js @9 [defer]
+basic.html (1-89)
 - main-header #main-header @12 [header]
   - Main navigation @13 [nav] # Main navigation
      13 |         <nav aria-label="Main navigation">
@@ -12,9 +11,4 @@ basic.html (1-87)
      17 |                 <li><a href="/contact">Contact</a></li>
      18 |             </ul>
      19 |         </nav>
-- content #content @22 [main]
-- main-footer #main-footer @65 [footer]
-- style @69
-- inline inline script @74
-- site-meta 0 items @82 [definition]
 [exit 0]

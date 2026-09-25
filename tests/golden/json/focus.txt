@@ -1,15 +1,9 @@
 basic.json::scripts.build (6-6)
+edges: no blank line above, no blank line below, then test (7)
 next: sct history basic.json::scripts.build (the commits that changed it)
-basic.json (2-20)
-- name "demo-app" @2
-- version "1.2.3" @3
-- private true @4
+basic.json (1-21)
 - scripts @5
   - build "node build.js" @6
      6 |     "build": "node build.js",
   - test "node ./scripts/test.mjs" @7
-- dependencies @9
-- keywords 3 items @13
-- config @14
-- _comment "JSON has no comments; a leading underscore is ... @20
 [exit 0]

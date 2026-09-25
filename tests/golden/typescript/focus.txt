@@ -1,8 +1,7 @@
 basic.ts::AuthService.constructor (26-29)
+edges: no blank line above, 30 blank below
 next: sct callers constructor (its call sites) · sct history basic.ts::AuthService.constructor (the commits that changed it)
-basic.ts (5-131)
-- import statements @5
-- Config @11 # Configuration interface for authentication service.
+basic.ts (1-133)
 - AuthService @19 [export] # Service for handling user authentication and authorization.
   - constructor (config: Config) @26 # Constructs a new AuthService instance.
      26 |   constructor(config: Config) {
@@ -12,10 +11,4 @@ basic.ts (5-131)
   - login (username: string, password: string) : Promise<User | null> @34 [async] # Authenticates a user with username and password.
   - logout (userId: string) : Promise<void> @42 [async] # Logs out a user by their ID.
   - validateToken (token: string) : boolean @49 # Validates an authentication token.
-- UserManager @57 [export] # Manager class for user CRUD operations.
-- generateId () : string @95 [export] # Generates a random unique identifier.
-- validateEmail (email: string) : boolean @102 [export] # Validates an email address format.
-- calculateStats (users: User[]) : { total: number; active: number } @109 # Arrow function to calculate statistics.
-- MAX_ATTEMPTS = 3 @119 # Default number of attempts before giving up.
-- retry (action: () => boolean, attempts: number = MAX_ATTEMPTS) : boolean @124 # Runs `action` until it returns true or the attempts are spent (not exported).
 [exit 0]

@@ -148,9 +148,10 @@ def test_focus_matches_a_heading_substring(capsys):
     assert code == 0
     # the shell door opens with the address; the body is the frozen contract
     assert out.splitlines()[0] == f'{MARKDOWN_SAMPLE}::"{leaf}" (13-23)'
+    assert out.splitlines()[1] == golden.splitlines()[1]  # edges
     # a file on disk in the repo: the shell door adds its history pointer
-    assert out.splitlines()[1].startswith("next: sct history ")
-    assert out.splitlines()[2:] == golden.splitlines()[1:]
+    assert out.splitlines()[2].startswith("next: sct history ")
+    assert out.splitlines()[3:] == golden.splitlines()[2:]
 
 
 def test_search_text_names_type_json_and_no_match(capsys):
@@ -242,8 +243,9 @@ def test_focus_on_stdin_content(monkeypatch, capsys):
     assert code == 0
     assert out.splitlines()[0] == "basic.py::DatabaseManager.query (24-26)"
     # stdin content has no file to follow through git: callers, no history
-    assert out.splitlines()[1] == "next: sct callers query (its call sites)"
-    assert out.splitlines()[2:] == golden.splitlines()[2:]
+    assert out.splitlines()[1] == "edges: 23 blank above, 27-28 blank below"
+    assert out.splitlines()[2] == "next: sct callers query (its call sites)"
+    assert out.splitlines()[3:] == golden.splitlines()[3:]
 
 
 def test_stdin_usage_errors_exit_2(monkeypatch, capsys):
@@ -378,7 +380,7 @@ def test_lines_on_the_other_three_and_not_on_json(capsys):
     assert (
         code == 0
         and len(lines) == 4
-        and cli.NUMBERED.match(lines[1])
+        and lines[1].startswith("edges: ")
         and cli.NUMBERED.match(lines[2])
     )
 
@@ -421,17 +423,18 @@ def test_focus_body_is_the_header_and_the_numbered_lines(capsys):
     lines = out.rstrip("\n").splitlines()
     assert code == 0 and lines[0].startswith(f"{FOCUS_MODULE}::_walk (")
     start, end = map(int, lines[0].rsplit("(", 1)[1].rstrip(")").split("-"))
-    assert [line.split(" | ", 1)[0] for line in lines[1:]] == [
+    assert lines[1].startswith("edges: ")
+    assert [line.split(" | ", 1)[0] for line in lines[2:]] == [
         str(n) for n in range(start, end + 1)
     ]
     assert (
-        lines[1] == f"{start} | def _walk(structures: list[StructureNode], ancestors: tuple = ()):"
+        lines[2] == f"{start} | def _walk(structures: list[StructureNode], ancestors: tuple = ()):"
     )
     assert "focus.py (" not in out  # no file outline
 
     full, _, _ = run("focus", str(FOCUS_MODULE), "_walk", capsys=capsys)
     numbered = [line.strip() for line in full.splitlines() if cli.NUMBERED.match(line)]
-    assert numbered == lines[1:]  # what `grep "^ +[0-9]+ |"` used to extract
+    assert numbered == lines[2:]  # what `grep "^ +[0-9]+ |"` used to extract
 
     out, _, code = run("focus", str(FOCUS_MODULE), "_walk", "--body", "--json", capsys=capsys)
     document = json.loads(out)
