@@ -135,7 +135,7 @@ CAPABILITIES: tuple[Capability, ...] = (
     Capability(
         command="search",
         usage=(
-            "sct search   <dir> <pattern> [--ref REF] [--names] [--type TYPE] [--limit N] [--offset N] [--lines N]",
+            "sct search   <dir> <pattern> [--ref REF] [--names] [-i] [--type TYPE] [--limit N] [--offset N] [--lines N]",
             "sct search   <dir> <pattern> --names --decorator RE   one row per structure, decorators on the row",
         ),
         short="hits with their enclosing structure, leads; --names",

@@ -230,7 +230,7 @@ sct scan     - --as <path> [...]         stdin content scanned as <path>
 sct focus    <path> <name|heading> [--ref REF] [--body] [--lines N] [--json]
 sct focus    <path>::<name>[@REF]        the address form, one argument
 sct focus    - --as <path> <name>        stdin content, one node
-sct search   <dir> <pattern> [--ref REF] [--names] [--type TYPE] [--limit N] [--offset N] [--lines N]
+sct search   <dir> <pattern> [--ref REF] [--names] [-i] [--type TYPE] [--limit N] [--offset N] [--lines N]
 sct search   <dir> <pattern> --names --decorator RE   one row per structure, decorators on the row
 sct diff     <refA> [<refB>] [--repo DIR] [--path PATH] [--no-merge-base] [--review]
 sct surface  <package-dir> [--ref REF] [--against REF] [--part ID]

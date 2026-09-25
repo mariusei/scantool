@@ -526,7 +526,7 @@ def test_orientation_part_single_several_comma_and_unknown(capsys):
     assert code == 0 and showing == ["entry"] and rendered == {}
 
     out, err, code = run(str(FIXTURE_DIR), "--part", "hot,nope", capsys=capsys)
-    assert code == 2 and out == ""
+    assert code == 2 and out.endswith("(exit 2)\n")  # the error on stdout too
     assert "unknown part 'nope'; parts: core, entry, structure, archetypes" in err
 
 
@@ -551,3 +551,25 @@ def test_lines_keeps_the_table_of_contents(capsys):
     assert code == 0 and len(lines) == 13
     assert TOC.match(lines[0]) and lines[1].startswith("📂 ")
     assert lines[-1].startswith("… +") and lines[-1].endswith("(--lines 12)")
+
+
+def test_search_ignore_case_reaches_names(capsys):
+    # -i: names ignore case too; text search always does
+    out, _, code = run("search", str(FOCUS_MODULE.parent), "FORMAT_FOCUS", "--names", capsys=capsys)
+    assert code == 1
+    out, _, code = run(
+        "search", str(FOCUS_MODULE.parent), "FORMAT_FOCUS", "--names", "-i", capsys=capsys
+    )
+    assert code == 0 and "- format_focus " in out
+
+
+def test_usage_errors_reach_stdout(capsys):
+    # an agent's `2>/dev/null` must not turn a usage error into an empty answer
+    with pytest.raises(SystemExit):
+        cli.main(["search", ".", "-c", "x"])
+    out, err = capsys.readouterr()
+    assert out.startswith("sct search: unrecognized arguments: -c") and "(exit 2)" in out
+    assert "usage: sct search" in err
+    assert cli.main(["focus", "only-one"]) == 2
+    out, _ = capsys.readouterr()
+    assert out.startswith("sct focus: give <path> <name>")

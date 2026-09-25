@@ -384,7 +384,8 @@ def run_search(args: argparse.Namespace) -> tuple[list[str], int]:
             "sct search: --decorator filters structures; it goes with --names "
             "(a text hit has no decorator)"
         )
-    pattern = {"name_pattern" if args.names else "content_pattern": args.pattern}
+    name = "(?i)" + args.pattern if args.ignore_case else args.pattern
+    pattern = {"name_pattern": name} if args.names else {"content_pattern": args.pattern}
     kwargs = dict(
         type_filter=args.type,
         has_decorator=args.decorator,
@@ -484,13 +485,26 @@ RUNNERS: dict[str, Callable[[argparse.Namespace], tuple[list[str], int]]] = {
 }
 
 
+def _say_on_stdout(message: str) -> None:
+    """A usage error on stdout too: agents run sct with `2>/dev/null`, and an
+    error that only reaches stderr then looks like an empty answer."""
+    sys.stdout.write(f"{message} (exit 2)\n")
+    sys.stdout.flush()
+
+
+class _Parser(argparse.ArgumentParser):
+    def error(self, message: str):
+        _say_on_stdout(f"{self.prog}: {message}; `{self.prog} -h` lists the options")
+        super().error(message)
+
+
 def build_parsers() -> dict[str, argparse.ArgumentParser]:
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--ascii", action="store_true", help="scantool's own glyphs as ASCII")
 
     def parser(command: str, description: str, json_form: bool) -> argparse.ArgumentParser:
         prog = f"sct {command}".rstrip()
-        p = argparse.ArgumentParser(prog=prog, description=description, parents=[common])
+        p = _Parser(prog=prog, description=description, parents=[common])
         if json_form:
             p.add_argument("--json", action="store_true", help="same content as JSON")
         else:
@@ -564,6 +578,12 @@ def build_parsers() -> dict[str, argparse.ArgumentParser]:
     search.add_argument("directory")
     search.add_argument("pattern", help="Python regex")
     search.add_argument("--names", action="store_true", help="match structure names, not text")
+    search.add_argument(
+        "-i",
+        "--ignore-case",
+        action="store_true",
+        help="names ignore case too (text search always does)",
+    )
     search.add_argument("--type", metavar="TYPE", help="report only structures of this type")
     search.add_argument(
         "--decorator",
@@ -713,6 +733,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         outputs, code = RUNNERS[command](args)
     except UsageError as error:
+        _say_on_stdout(str(error))
         parser.print_usage(sys.stderr)
         sys.stderr.write(f"{error}\n")
         return 2

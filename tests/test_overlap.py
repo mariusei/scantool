@@ -293,7 +293,7 @@ class TestParts:
 
     def test_unknown_part_is_a_usage_error_listing_the_ids(self, repo, capsys):
         out, err, code = run("overlap", "main", "feat-a", "feat-b", "--part", "nope", capsys=capsys)
-        assert code == 2 and out == ""
+        assert code == 2 and out.endswith("(exit 2)\n")  # the error on stdout too
         assert "unknown part 'nope'; parts: branches, history, shared, colliding, order" in err
 
     def test_json_carries_the_inventory(self, repo, capsys):
