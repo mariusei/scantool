@@ -7,8 +7,8 @@ PROBLEM:
 
 SOLUTION:
   Look up a node by name or qualified path (ClassA.method, heading text),
-  render the file skeleton at depth 1 with the path to the node expanded
-  (parent context), and the node itself verbatim with line numbers. Reuses
+  render the path to the node with its parents' other members (parent
+  context), and the node itself verbatim with line numbers. Reuses
   TreeFormatter: the verbatim view IS the formatter's code_excerpt mechanism.
 
 SCOPE:
@@ -20,6 +20,7 @@ SCOPE:
 import re
 import shlex
 from dataclasses import replace
+from pathlib import Path
 
 from .formatter import TreeFormatter
 from .languages import StructureNode
@@ -34,7 +35,7 @@ def format_focus(
     body_only: bool = False,
     in_git: bool = False,
 ) -> str:
-    """Render skeleton-with-context + verbatim body for the focused node.
+    """Render the path to the focused node + the node verbatim.
 
     addressed=True opens with the node's structural address instead of the
     `focus:` line: `path::Qualified.name (a-b)`, the form `focus` accepts
@@ -59,11 +60,16 @@ def format_focus(
     path_ids = {id(node) for node in (*ancestors, target)}
     pruned = _prune(structures, target, path_ids, source_lines)
     pointer = next_steps(file_path, structures, target, ancestors, in_git)
+    # the formatter's first line spans the nodes shown, here only the path to
+    # the target: name the whole file instead
+    tree = TreeFormatter().format(file_path, pruned).split("\n", 1)[1]
+    lines = len(source_lines) - (1 if source_lines and source_lines[-1] == "" else 0)
     return (
         header
         + "\n"
         + (pointer + "\n" if pointer else "")
-        + TreeFormatter().format(file_path, pruned)
+        + f"{Path(file_path).name} (1-{lines})\n"
+        + tree
     )
 
 
@@ -300,10 +306,16 @@ def _prune(
     target: StructureNode,
     path_ids: set[int],
     source_lines: list[str],
+    top: bool = True,
 ) -> list[StructureNode]:
-    """Depth-1 copies; the ancestor path stays expanded, the target verbatim."""
+    """Depth-1 copies; the ancestor path stays expanded, the target verbatim.
+    The file's other top-level structures are left out: `sct scan` gives the
+    outline, and repeating it made a focus on a function in a long file
+    mostly outline (194 lines for a 90-line function)."""
     pruned = []
     for node in structures:
+        if top and node.type != "file-info" and id(node) not in path_ids:
+            continue
         if node.type == "file-info":
             pruned.append(node)
         elif id(node) == id(target):
@@ -311,7 +323,7 @@ def _prune(
             pruned.append(replace(node, children=[], code_skeleton=None, code_excerpt=excerpt))
         elif id(node) in path_ids:
             shallow = replace(node, code_skeleton=None, code_excerpt=None)
-            shallow.children = _prune(node.children, target, path_ids, source_lines)
+            shallow.children = _prune(node.children, target, path_ids, source_lines, top=False)
             pruned.append(shallow)
         else:
             pruned.append(replace(node, children=[], code_skeleton=None, code_excerpt=None))

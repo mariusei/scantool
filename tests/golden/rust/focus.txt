@@ -1,11 +1,7 @@
 basic.rs::DatabaseManager.new (22-27)
 edges: no blank line above, 28 blank below
 next: sct callers new (its call sites) · sct history basic.rs::DatabaseManager.new (the commits that changed it)
-basic.rs (3-105)
-- use statements @3
-- User @7 [pub] # User account with basic information.
-   #[derive(Debug, Clone)]
-- DatabaseManager @15 [pub] # Database connection manager.
+basic.rs (1-105)
 - DatabaseManager @20
   - new (connection_string: String) -> Self @22 [pub] # Create a new database manager.
      22 |     pub fn new(connection_string: String) -> Self {
@@ -16,12 +12,4 @@ basic.rs (3-105)
      27 |     }
   - connect (&mut self) -> Result<(), String> @30 [pub] # Connect to the database.
   - query (&self, sql: &str) -> Vec<String> @36 [pub] # Execute a SQL query.
-- UserService @42 [pub] # Service for user operations.
-- UserService @46
-- Validate @64 [pub] # Trait for objects that can be validated.
-- Validate for User @69
-- validate_email (email: &str) -> bool @80 [pub] # Validate an email address.
-- main () @85 # Entry point for the application.
-- MAX_ATTEMPTS = 3 @95 [pub] # Upper bound on connection attempts.
-- retry (action: &mut dyn FnMut() -> bool, attempts: u32) -> bool @98 # Run `action` until it returns true or the attempts are spent (private).
 [exit 0]

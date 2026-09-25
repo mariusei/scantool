@@ -1,22 +1,10 @@
 basic.swift::Config.host (8-8)
 edges: no blank line above, no blank line below, then port (9)
 next: sct history basic.swift::Config.host (the commits that changed it)
-basic.swift (3-128)
-- import statements @3
+basic.swift (1-128)
 - Config @7 # Configuration structure for the application
   - host : String @8
      8 |     let host: String
   - port : Int @9
   - isEnabled : Bool @10
-- Logger @14 # Protocol for logging operations
-- UserStatus : String @23 # Enum representing user status
-- DatabaseManager @39 [public] # Database manager class for handling connections
-- DatabaseManager : Logger @69 # Extension adding logging capability to DatabaseManager
-- UserService @80 # User service for handling user operations
-- validateEmail (_ email: String) -> Bool @104 # Validate email format
-- formatTimestamp (_ date: Date) -> String @109 # Format a timestamp to string
-- UserID = Int @116 # Typealias for convenience
-- CompletionHandler = (Result<Bool, Error>) -> Void @117
-- defaultAttempts = 3 @120 # Default number of connection attempts
-- retry (_ action: () -> Bool, attempts: Int) -> Bool @123 [private] # Run `action` until it returns true or the attempts are spent (file-private)
 [exit 0]

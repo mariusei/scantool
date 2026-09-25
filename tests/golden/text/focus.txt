@@ -1,7 +1,7 @@
 basic.txt::"PROJECT OVERVIEW" (1-6)
 edges: no blank line above, no blank line below, then INTRODUCTION (7)
 next: sct history 'basic.txt::"PROJECT OVERVIEW"' (the commits that changed it)
-basic.txt (1-88)
+basic.txt (1-87)
 - PROJECT OVERVIEW @1 # This is a plain text document demonstrating the text file scanner capabilities.
    1 | PROJECT OVERVIEW
    2 | ================
@@ -9,12 +9,4 @@ basic.txt (1-88)
    4 | This is a plain text document demonstrating the text file scanner capabilities.
    5 | It contains various structural elements that should be detected and parsed.
    6 | 
-- INTRODUCTION @7 # The file scanner MCP is designed to handle multiple file formats including plain text files.
-- Features and Capabilities @13 # The scanner can detect several types of structural elements in plain text:
-- TECHNICAL DETAILS @24 # The implementation uses pattern matching to identify:
-- USE CASES @34 # There are many scenarios where analyzing plain text structure is useful:
-- PERFORMANCE CONSIDERATIONS @47 # The text scanner is lightweight and doesn't require tree-sitter parsing.
-- FUTURE ENHANCEMENTS @57 # Potential improvements could include:
-- CONCLUSION @67 # This demonstrates the capability to extract meaningful structure from plain text files without requiring any special ma…
-- REFERENCES @76 # Related material, listed as plain references since text has no link syntax:
 [exit 0]

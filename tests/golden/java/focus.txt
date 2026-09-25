@@ -1,16 +1,10 @@
 Basic.java::Config.getApiKey (15-15)
 edges: no blank line above, no blank line below, then getEndpoint (16)
 next: sct callers getApiKey (its call sites) · sct history Basic.java::Config.getApiKey (the commits that changed it)
-Basic.java (5-129)
-- com.example.demo @5
-- import statements @7
+Basic.java (1-129)
 - Config @14 [public] # Configuration interface for application settings.
   - getApiKey () : String @15 [public]
      15 |     String getApiKey();
   - getEndpoint () : String @16 [public]
   - getTimeout () : int @17 [public]
-- DatabaseManager @23 [public] # Manages database connections and queries.
-- UserService @62 [public] # Handles user-related operations.
-- EmailValidator @97 [public] # Utility class for email validation.
-- ConnectionRetrier @109 [public] # Retries a connection until it succeeds or the budget is spent.
 [exit 0]

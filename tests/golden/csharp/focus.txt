@@ -1,8 +1,7 @@
 Basic.cs::MyApp.Services.IConfig (14-19)
 edges: no blank line above, 20 blank below
 next: sct history Basic.cs::MyApp.Services.IConfig (the commits that changed it)
-Basic.cs (5-201)
-- using directives @5
+Basic.cs (1-201)
 - MyApp.Services @9
   - IConfig @14 [public] # Configuration interface for application settings.
      14 |     public interface IConfig

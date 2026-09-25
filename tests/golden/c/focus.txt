@@ -1,22 +1,11 @@
 basic.c::User (8-12)
 edges: no blank line above, 13 blank below
 next: sct history basic.c::User (the commits that changed it)
-basic.c (3-83)
-- #include directives @3
+basic.c (1-83)
 - User @8 # User structure definition
    8 | struct User {
    9 |     int id;
    10 |     char name[100];
    11 |     char email[100];
    12 | };
-- DatabaseConfig @15 # Database configuration structure
-- init_user void (struct User *user, int id, const char *name) @22 # Initialize a user with default values
-- validate_email int (const char *email) @29 # Validate email format
-- connect_database int (struct DatabaseConfig *config) @34 # Connect to database
-- free_user void (struct User *user) @40 # Free user resources
-- Status @45 # Status codes enumeration
-- MAX_RETRIES = 3 @52 # Retry budget for connection attempts
-- Pool @55 # Connection pool, its address record nested in it
-- retry_connect int (struct DatabaseConfig *config) @64 [static] # Retry the connection until it succeeds or the budget is spent (internal)
-- main int (void) @74 # Main entry point
 [exit 0]

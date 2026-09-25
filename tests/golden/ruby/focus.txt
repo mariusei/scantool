@@ -1,8 +1,7 @@
 basic.rb::DataAccess.DatabaseManager (10-38)
 edges: no blank line above, no blank line below
 next: sct callers DatabaseManager (its call sites) · sct history basic.rb::DataAccess.DatabaseManager (the commits that changed it)
-basic.rb (3-97)
-- require statements @3
+basic.rb (1-99)
 - DataAccess @8 # Data access layer module
   - DatabaseManager @10 # Manages database connections and queries
      10 |   class DatabaseManager
@@ -34,9 +33,4 @@ basic.rb (3-97)
      36 |       new("postgresql://localhost/mydb")
      37 |     end
      38 |   end
-- UserService @42 # Handles user-related operations
-- validate_email (email) @64 # Validate email format
-- DEFAULT_ATTEMPTS = 3 @69
-- Retrier @72 # Retries a block a bounded number of times
-- main () @92 # Main entry point
 [exit 0]

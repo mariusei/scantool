@@ -1,16 +1,9 @@
 basic.toml::server.host (6-6)
 edges: no blank line above, no blank line below, then port (7)
 next: sct history basic.toml::server.host (the commits that changed it)
-basic.toml (2-25)
-- name "demo-app" @2 # Project configuration
-- version "1.2.3" @3
+basic.toml (1-25)
 - server @5
   - host "localhost" @6
      6 | host = "localhost"
   - port 8080 @7
-- server.tls @9
-- plugins @13
-- plugins @17
-- Limits applied to every worker. 2 lines @21
-- limits @23
 [exit 0]

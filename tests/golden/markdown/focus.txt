@@ -1,7 +1,7 @@
 basic.md::"Installation" (5-23)
 edges: 4 blank above, no blank line below, then Features (24)
 next: sct history 'basic.md::"Installation"' (the commits that changed it)
-basic.md (1-129)
+basic.md (1-128)
 - Project Documentation @1 # This is a sample Markdown file for testing the scanner.
   - Installation @5 # To install the package, run:
      5 | ## Installation
@@ -28,5 +28,4 @@ basic.md (1-129)
   - API Reference @61 # Main components of the system.
   - Contributing @77 # Guidelines for contributors.
   - License @93 # MIT License
-- Alternative Heading Style @99 # This is a level 1 heading using Setext style.
 [exit 0]
