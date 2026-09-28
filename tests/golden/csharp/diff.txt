@@ -1,4 +1,5 @@
 <1 file changed, 1 with structural rows> v1 → v2
+next: sct focus 'Basic.cs::MyApp.Services.DatabaseManager@v2 (24-70)' (the largest changed body in full; @v1 for the old one)
 
 Basic.cs  (+1 ~3 =1 -1)
   + MyApp.Services.DatabaseManager.Health() : bool                     B:58

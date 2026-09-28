@@ -19,6 +19,7 @@ Regenerate deliberately: UPDATE_GOLDEN=1 uv run pytest tests/test_feature_golden
 
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -198,3 +199,27 @@ def test_feature_answer_is_frozen(lang, command, fixtures, capsys):
     _assert_matches_golden(
         f"{lang}/{command}", _cell(directory, name, has_after, targets, command, capsys)
     )
+
+
+@pytest.mark.parametrize("lang", sorted(SAMPLES))
+def test_diff_pointer_reads_both_sides(lang, fixtures, capsys, monkeypatch):
+    """The golden freezes the diff's next: line; this runs it. Side b as
+    printed, side a with the ref it offers for the old one."""
+    directory, _, has_after, _ = fixtures[lang]
+    if not has_after:
+        pytest.skip(f"{lang}: no after sample")
+    monkeypatch.chdir(directory)
+    cli.main(["diff", "v1", "v2"])
+    pointer = next(
+        (line for line in capsys.readouterr().out.splitlines() if line.startswith("next: ")),
+        None,
+    )
+    if pointer is None:
+        pytest.skip(f"{lang}: no changed body to point at")
+    command, _, why = pointer.removeprefix("next: ").partition(" (the largest")
+    _, verb, address = shlex.split(command)
+    old = re.search(r"; (@\S+) for the old one", why)
+    for shown in (address, address.replace("@v2", old.group(1)) if old else None):
+        if shown is not None:
+            assert cli.main([verb, shown]) == 0, (lang, shown)
+            capsys.readouterr()

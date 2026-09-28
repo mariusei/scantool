@@ -69,7 +69,7 @@ def diff(
         if review:
             document["review"] = tail or None
         return json.dumps(document, indent=2), 0
-    text = format_diff(result)
+    text = format_diff(result, root=os.path.relpath(top, where))
     if tail:
         text += "\n\n" + tail
     return text, 0

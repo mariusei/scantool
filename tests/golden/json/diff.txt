@@ -1,4 +1,5 @@
 <1 file changed, 1 with structural rows> v1 → v2
+next: sct focus basic.json::version@v2 (the largest changed body in full; @v1 for the old one)
 
 basic.json  (+1 ~1 =1 -1)
   + license "MIT"      B:19
