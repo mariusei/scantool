@@ -30,6 +30,7 @@ SCOPE:
 import difflib
 import hashlib
 import os
+import posixpath
 import shlex
 import subprocess
 from collections import Counter
@@ -718,7 +719,8 @@ def _next_focus(result: DiffResult, root: str) -> str:
     target = result.focus
     if target is None:
         return ""
-    path = os.path.normpath(os.path.join(root, target.path))
+    # forward slashes on every OS, like the git paths in the table
+    path = posixpath.normpath(posixpath.join(Path(root).as_posix(), target.path))
     span = _RANGE.search(target.name)
     name, pinned = (target.name[: span.start()], span.group(0)) if span else (target.name, "")
     at = "" if result.side_b == WORKTREE else f"@{result.side_b}"
