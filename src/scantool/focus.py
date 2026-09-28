@@ -23,6 +23,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from .formatter import TreeFormatter
+from .gitref import split_address
 from .languages import StructureNode
 
 
@@ -96,12 +97,8 @@ def next_steps(
         # the bare name: how a qualified one narrows differs per language
         # (Java and Ruby definitions carry no class), the bare one always resolves
         steps.append(f"sct callers {shlex.quote(target.name)} (its call sites)")
-    name = address_name(structures, target, ancestors)
-    if in_git:
-        # a name two structures share (a Rust struct and its impl) carries the
-        # range, the form focus and history both accept
-        if len(_resolve(structures, name)) > 1:
-            name += f" ({target.start_line}-{target.end_line})"
+    name = resolving_name(structures, target, ancestors)
+    if in_git and name is not None:
         address = shlex.quote(f"{file_path}::{name}")
         steps.append(f"sct history {address} (the commits that changed it)")
     return "next: " + " · ".join(steps) if steps else ""
@@ -213,6 +210,24 @@ _ID_TAG = re.compile(r"^\[([A-Za-z][A-Za-z0-9]*-[A-Za-z0-9]+)\]")
 
 def _is_heading(node: StructureNode) -> bool:
     return node.type.startswith("heading") or node.type == "section"
+
+
+def resolving_name(
+    structures: list[StructureNode], target: StructureNode, ancestors: tuple
+) -> str | None:
+    """The name part of `path::name` that reads back as target alone, through
+    split_address and _resolve both: the address name, else the bare name,
+    each quoted when the plain form splits wrong (a CSS `:root`), and with
+    the range when another structure answers to it too (a Rust struct
+    and its impl). None when no form does."""
+    for name in dict.fromkeys((address_name(structures, target, ancestors), target.name)):
+        bare = name.strip('"')
+        for form in dict.fromkeys((name, f'"{bare}"')):
+            for pinned in (form, f"{form} ({target.start_line}-{target.end_line})"):
+                path, parsed, _ = split_address(f"f::{pinned}")
+                if path == "f" and [node for node, _ in _resolve(structures, parsed)] == [target]:
+                    return pinned
+    return None
 
 
 def address_name(structures: list[StructureNode], target: StructureNode, ancestors: tuple) -> str:

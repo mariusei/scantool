@@ -30,11 +30,14 @@ SCOPE:
 import difflib
 import hashlib
 import os
+import posixpath
+import shlex
 import subprocess
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .focus import _RANGE, _resolve, _walk, resolving_name
 from .formatter import TreeFormatter
 from .languages.base import BaseLanguage, default_is_private_name
 from .languages.models import StructureNode
@@ -89,6 +92,7 @@ class Row:
     # + or ~ callable rows only: distinct other rows in THIS diff whose
     # enclosing function/method, on side b, calls this row's bare name.
     called_by_changed: int = 0
+    changed_lines: int = 0  # ~ rows only: body lines the change touches
 
 
 @dataclass
@@ -102,11 +106,23 @@ class FileDiff:
 
 
 @dataclass
+class Focus:
+    """The changed structure whose body changed most, as focus reads it back:
+    its file on side b and the name part of the address (a trailing
+    ` (a-b)` pins side b's range). old: the same address reads side a too."""
+
+    path: str
+    name: str
+    old: bool
+
+
+@dataclass
 class DiffResult:
     side_a: str
     side_b: str
     files: list[FileDiff]
     note: str | None = None  # merge-base line
+    focus: Focus | None = None  # the next read, when the diff has one
 
     @property
     def counts(self) -> Counter:
@@ -406,6 +422,7 @@ def file_rows(a: dict[str, NodeRecord], b: dict[str, NodeRecord]) -> list[Row]:
                 a[key].start,
                 b[key].start,
                 _change_note(a[key], b[key]),
+                changed_lines=sum(_changed_lines(a[key].body, b[key].body)),
             )
         )
     # An unchanged member of a renamed parent follows the parent: one row
@@ -477,6 +494,9 @@ def diff_refs(
     # for every file with rows — the raw material _annotate_call_relations
     # needs to build a call graph scoped to just this diff's files.
     changed: list[tuple[FileDiff, str, str, dict[str, NodeRecord]]] = []
+    # (row, old rel, new rel, side-a content, side-b content) of the ~ row
+    # whose body changed most so far: the one the next: pointer reads
+    largest: tuple[Row, str, str, str, str] | None = None
     for status, old_rel, new_rel in _name_status(top, side_a, side_b, pathspec):
         entry = FileDiff(
             path=new_rel,
@@ -499,11 +519,8 @@ def diff_refs(
                 entry.skeleton = TreeFormatter().format(new_rel, structures)
             continue
         b_content = read_side(top, side_b, new_rel) if not status.startswith("D") else None
-        a = _scan_side(
-            scanner,
-            read_side(top, side_a, old_rel) if not status.startswith("A") else None,
-            old_rel,
-        )
+        a_content = read_side(top, side_a, old_rel)
+        a = _scan_side(scanner, a_content, old_rel)
         b = _scan_side(scanner, b_content, new_rel)
         if a is None or b is None:
             entry.reason = "unstructured type"
@@ -515,8 +532,47 @@ def diff_refs(
             changed.append(
                 (entry, new_rel, b_content, {record.name: record for record in b.values()})
             )
+            for row in entry.rows:
+                if (
+                    row.mark == "~"
+                    and row.a_line
+                    and row.b_line
+                    and (largest is None or row.changed_lines > largest[0].changed_lines)
+                ):
+                    largest = (row, old_rel, new_rel, a_content or "", b_content)
     _annotate_call_relations(scanner, changed)
-    return DiffResult(side_a, side_b, files)
+    return DiffResult(side_a, side_b, files, focus=_focus(scanner, largest) if largest else None)
+
+
+def _focus(scanner: FileScanner, largest: tuple[Row, str, str, str, str]) -> Focus | None:
+    """The row as an address focus resolves to it alone on side b; old when
+    the file kept its path and the address, pinned to no line, resolves to
+    the row's own structure on side a as well."""
+    row, old_rel, new_rel, a_content, b_content = largest
+    sides = []
+    for content, rel, line in ((b_content, new_rel, row.b_line), (a_content, old_rel, row.a_line)):
+        structures = scanner.scan_content(content, rel, include_metadata=False) or []
+        node = next(
+            (
+                (n, anc)
+                for n, anc in _walk(structures)
+                if n.start_line == line and row.name.endswith(n.name)
+            ),
+            None,
+        )
+        sides.append((structures, node))
+    (b_structures, b_node), (a_structures, a_node) = sides
+    if b_node is None:
+        return None
+    name = resolving_name(b_structures, *b_node)
+    if name is None:
+        return None
+    old = (
+        old_rel == new_rel
+        and a_node is not None
+        and [n for n, _ in _resolve(a_structures, name)] == [a_node[0]]
+    )
+    return Focus(new_rel, name, old)
 
 
 def _annotate_call_relations(
@@ -575,8 +631,10 @@ def _plural(n: int, noun: str) -> str:
     return f"{n} {noun}" if n == 1 else f"{n} {noun}s"
 
 
-def format_diff(result: DiffResult, max_rows: int | None = None) -> str:
-    """The table: a coverage line, the merge-base note, one block per file."""
+def format_diff(result: DiffResult, max_rows: int | None = None, root: str = ".") -> str:
+    """The table: a coverage line, the merge-base note, the next read, one
+    block per file. root is the repository top as seen from where the
+    command runs, so the pointer's path resolves there."""
     with_rows = [f for f in result.files if f.rows or f.skeleton]
     without = [f for f in result.files if f.reason]
     reasons = Counter(f.reason for f in without)
@@ -594,6 +652,9 @@ def format_diff(result: DiffResult, max_rows: int | None = None) -> str:
     if not with_rows:
         lines.append(f"no structural differences between {result.side_a} and {result.side_b}")
         return "\n".join(lines)
+    pointer = _next_focus(result, root)
+    if pointer:
+        lines.append(pointer)
     for file in with_rows:
         lines.append("")
         label = file.path if not file.old_path else f"{file.path} (renamed from {file.old_path})"
@@ -649,6 +710,24 @@ def _note_text(row: Row) -> str:
     if row.called_by_changed:
         parts.append(f"called by {_count(row.called_by_changed, 'changed function')} here")
     return "; ".join(parts)
+
+
+def _next_focus(result: DiffResult, root: str) -> str:
+    """The focus call for the changed structure whose body changed most: the
+    table says where the change is, this reads its lines. The ref goes
+    before a pinned line, the one form split_address takes both in."""
+    target = result.focus
+    if target is None:
+        return ""
+    # forward slashes on every OS, like the git paths in the table
+    path = posixpath.normpath(posixpath.join(Path(root).as_posix(), target.path))
+    span = _RANGE.search(target.name)
+    name, pinned = (target.name[: span.start()], span.group(0)) if span else (target.name, "")
+    at = "" if result.side_b == WORKTREE else f"@{result.side_b}"
+    why = "the largest changed body in full"
+    if target.old:
+        why += f"; @{result.side_a} for the old one"
+    return f"next: sct focus {shlex.quote(f'{path}::{name}{at}{pinned}')} ({why})"
 
 
 def _location(row: Row) -> str:

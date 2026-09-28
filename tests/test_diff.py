@@ -218,6 +218,43 @@ class TestDiff:
         marks = {(r["mark"], r["name"]) for f in document["files"] for r in f["rows"]}
         assert ("=", "gamma") in marks and ("~", "alpha") in marks
 
+    def test_next_points_focus_at_the_largest_changed_body(self, repo, capsys):
+        out, _, _ = run("diff", "main", "feature", capsys=capsys)
+        lines = out.splitlines()
+        base = lines[0].split("comparing ")[1].split(" ")[0]
+        assert lines[1].startswith("<5 files changed")
+        # Section A's doc line outweighs LIMIT's and alpha's zero body lines
+        assert lines[2] == (
+            "next: sct focus 'docs.md::\"Section A\"@feature' "
+            f"(the largest changed body in full; @{base} for the old one)"
+        )
+        for ref, words in (("feature", "new words here"), (base, "old words")):
+            shown, _, code = run("focus", f'docs.md::"Section A"@{ref}', capsys=capsys)
+            assert code == 0 and words in shown
+
+    def test_next_path_resolves_from_a_subdirectory(self, repo, monkeypatch, capsys):
+        (repo / "sub").mkdir()
+        monkeypatch.chdir(repo / "sub")
+        out, _, _ = run("diff", "main", "feature", capsys=capsys)
+        assert "next: sct focus '../docs.md::" in out
+        shown, _, code = run("focus", '../docs.md::"Section A"@feature', capsys=capsys)
+        assert code == 0 and "new words here" in shown
+
+    def test_shared_heading_name_is_qualified(self, repo, capsys):
+        # two "Usage" sections: the parent's name picks one, as focus reads it
+        doc = "# One\n\n## Usage\n\na\n\n# Two\n\n## Usage\n\nb\n"
+        (repo / "dup.md").write_text(doc)
+        _git(repo, "add", "dup.md")
+        _git(repo, "commit", "-qm", "dup")
+        (repo / "dup.md").write_text(doc.replace("\nb\n", "\nb changed at length\n"))
+        out, _, _ = run("diff", "HEAD", "--path", "dup.md", capsys=capsys)
+        assert out.splitlines()[1] == (
+            "next: sct focus 'dup.md::\"Two.Usage\"' "
+            "(the largest changed body in full; @HEAD for the old one)"
+        )
+        shown, _, code = run("focus", 'dup.md::"Two.Usage"', capsys=capsys)
+        assert code == 0 and "b changed at length" in shown
+
     def test_identical_signature_deltas_fold_into_one_row(self, tmp_path):
         old = "def a(x):\n    return 1\n\n\ndef b(x):\n    return 2\n\n\ndef c(x):\n    return 3\n"
         new = old.replace("(x)", "(x, binding)")
