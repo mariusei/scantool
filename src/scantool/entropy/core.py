@@ -95,6 +95,10 @@ def select_salient_nodes(
     candidates = _candidate_nodes(structures or [])
     if not candidates or len(data) == 0:
         return []
+    if len(candidates) == 1:
+        # Scores normalised over one node are all 0: skip the passes over the
+        # whole file (a 100 MB data file with one excerpt spent 1.9 s here)
+        return [(candidates[0], 0.0)]
 
     line_starts = _line_starts(data)
     call_counts = _call_counts(data) if use_centrality else {}

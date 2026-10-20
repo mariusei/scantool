@@ -93,8 +93,12 @@ def analyze_health(
         # Unsupported binaries are carried as file-info stubs with no parseable
         # structure; reading a multi-GB GeoTIFF as text just to count words is
         # ruinously slow and yields nothing. Skip them — they contribute no
-        # definitions and no meaningful references.
-        if is_file_info_stub(structures):
+        # definitions and no meaningful references. A data file's cells are
+        # values, not references, however many words they hold.
+        language = get_language_for(file_path)
+        if is_file_info_stub(structures) or (
+            language is not None and not language.MENTIONS_ARE_REFERENCES
+        ):
             contents[file_path] = ""
             continue
         try:

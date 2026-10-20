@@ -1,0 +1,9 @@
+<6 public names, 6 via definition> package csv @WORKTREE
+basic
+  order_id  col 1, int         csv/basic.csv:1
+  placed_on  col 2, date       csv/basic.csv:1
+  customer  col 3, text        csv/basic.csv:1
+  amount  col 4, float         csv/basic.csv:1
+  paid  col 5, bool            csv/basic.csv:1
+  note  col 6, text or empty   csv/basic.csv:1
+[exit 0]

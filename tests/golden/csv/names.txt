@@ -1,0 +1,4 @@
+<1 file seen, 7 structures shown, 1 excluded (.git/)>
+basic.csv (1-1)
+- order_id col 1, int @1 # e.g. 1001
+[exit 0]

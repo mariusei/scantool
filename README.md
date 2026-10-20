@@ -317,6 +317,7 @@ scantool does not attempt it.
 | `.zig` | Zig | functions, structs, enums, unions, tests, constants |
 | `.swift` | Swift | classes, structs, enums, protocols, functions, extensions, constants |
 | `.sh`, `.bash` | Bash | functions, file-scope variables and exports, comment blocks, `source` and script-execution edges |
+| `.ps1`, `.psm1`, `.psd1` | PowerShell | functions and filters with their `param()` signatures, classes, enums, comment-based help, file-scope variables, manifest keys; dot-source, `Import-Module`, manifest and script-execution edges |
 | `Makefile`, `GNUmakefile`, `Makefile.*`, `.mk` | Make | targets with prerequisites, variables, `define` blocks; `include`, recursive-make and script-execution edges, prerequisite calls, default goal |
 | `Dockerfile`, `Containerfile`, `Dockerfile.*`, `.dockerfile` | Dockerfile | build stages, ARG and ENV values; edges to the project files COPY/ADD take and to the copied scripts RUN, ENTRYPOINT and CMD run, stage-to-stage calls, entry point |
 | `.sql` | SQL | tables, views, functions, procedures, indexes, columns |
@@ -330,6 +331,7 @@ scantool does not attempt it.
 | `.json` | JSON | object keys (nested fully), arrays with item counts, scalar values |
 | `.toml` | TOML | tables, array tables, nested keys, inline tables, arrays with item counts |
 | `.xml`, `.xsd`, `.xsl`, `.xslt`, `.csproj`, `.fsproj`, `.vbproj`, `.props`, `.targets`, `.slnx` | XML | elements named by their `id`/`name`/`key`/`Include` attribute, attributes, leaf text; Maven, MSBuild, `.slnx`, XSD, XSLT and XInclude file references as import edges |
+| `.csv`, `.tsv` | CSV | columns with position, sampled type and an example value; row count; the first rows (from a 64 KiB prefix, so a large file costs no parse) |
 | `.png`, `.jpg`, `.gif`, `.webp` | Images | format, dimensions, colors, content type |
 
 Broken files fall back to regex extraction, so a file that no longer parses

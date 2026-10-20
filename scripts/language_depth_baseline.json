@@ -31,6 +31,14 @@
     "files": 241,
     "files_import_linked": 0.8008
   },
+  "csv": {
+    "calls_per_file": 0.0,
+    "defs_called": 0.0,
+    "defs_per_file": 0.0,
+    "dropped_callers": 0,
+    "files": 25,
+    "files_import_linked": 0.0
+  },
   "dockerfile": {
     "calls_per_file": 0.0,
     "defs_called": 0.0,
@@ -70,6 +78,14 @@
     "dropped_callers": 0,
     "files": 72,
     "files_import_linked": 0.7639
+  },
+  "powershell": {
+    "calls_per_file": 69.4963,
+    "defs_called": 0.6296,
+    "defs_per_file": 2.6765,
+    "dropped_callers": 0,
+    "files": 272,
+    "files_import_linked": 0.2169
   },
   "python": {
     "calls_per_file": 120.2353,

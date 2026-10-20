@@ -1,0 +1,4 @@
+<1 file seen, 15 structures shown, 1 excluded (.git/)>
+basic.ps1 (15-15)
+- ErrorActionPreference = 'Stop' @15
+[exit 0]

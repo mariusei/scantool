@@ -1,0 +1,7 @@
+basic.csv::order_id (1-1)
+edges: no blank line above, no blank line below, then rows (2)
+next: sct history basic.csv::order_id (the commits that changed it)
+basic.csv (1-6)
+- order_id col 1, int @1 # e.g. 1001
+   1 | order_id,placed_on,customer,amount,paid,note
+[exit 0]
