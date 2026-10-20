@@ -92,3 +92,10 @@ repo = "zigtools/zls"
 commit = "3f662a11ad8fd8698eda4521dd60b524c9eac0e2"
 path = "src"
 extensions = [".zig"]
+
+[[corpus]]
+language = "bash"
+repo = "Bash-it/bash-it"
+commit = "ee8396b5a049ae648b9a75575507984d27a119bb"
+path = "."
+extensions = [".sh", ".bash"]

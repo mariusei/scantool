@@ -1,4 +1,12 @@
 {
+  "bash": {
+    "calls_per_file": 11.1272,
+    "defs_called": 0.452,
+    "defs_per_file": 2.6509,
+    "dropped_callers": 0,
+    "files": 338,
+    "files_import_linked": 0.0947
+  },
   "c": {
     "calls_per_file": 140.8864,
     "defs_called": 0.7776,
