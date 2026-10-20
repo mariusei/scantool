@@ -160,6 +160,25 @@ CASES: dict[str, Case] = {
             '@import("dir/util.zig")': ("src/main.zig", 'const util = @import("dir/util.zig");\n'),
         },
     ),
+    "bash": Case(
+        target="lib/util.sh",
+        files={"lib/util.sh": "f() { :; }\n"},
+        forms={
+            "source path": ("lib/a.sh", "source util.sh\n"),
+            ". path": ("b.sh", ". lib/util.sh\n"),
+            'source "$(dirname "$0")/path"': (
+                "scripts/c.sh",
+                'source "$(dirname "$0")/../lib/util.sh"\n',
+            ),
+            'DIR=$(cd "$(dirname ...)" && pwd); "$DIR/path"': (
+                "scripts/d.sh",
+                'DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"\n"$DIR/lib/util.sh"\n',
+            ),
+            'source "$ROOT/path"': ("tools/e.bash", 'source "${ROOT}/lib/util.sh"\n'),
+            "bash path": ("f.sh", "bash lib/util.sh --verbose\n"),
+            "./path": ("lib/g.sh", "./util.sh\n"),
+        },
+    ),
     "c": Case(
         target="include/dir/util.h",
         files={"include/dir/util.h": "int f(void);\n"},

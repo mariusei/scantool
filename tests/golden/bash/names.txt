@@ -1,0 +1,4 @@
+<1 file seen, 10 structures shown, 1 excluded (.git/)>
+basic.sh (2-4)
+- Deploy the release artifacts to the staging host. 3 lines @2
+[exit 0]

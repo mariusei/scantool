@@ -1,0 +1,9 @@
+<6 public names, 6 via definition> package bash @WORKTREE
+basic
+  SCRIPT_DIR  = "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"   bash/basic.sh:8
+  DEFAULT_HOST  = "staging.example.com"                           bash/basic.sh:9
+  LOG_LEVEL  = "${LOG_LEVEL:-info}"                               bash/basic.sh:10
+  usage                                                           bash/basic.sh:16
+  deploy                                                          bash/basic.sh:35
+  main                                                            bash/basic.sh:49
+[exit 0]
