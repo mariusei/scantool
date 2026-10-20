@@ -710,6 +710,33 @@ scanner's reach by nature — the engine returns "unresolvable" there, never a g
 
 ---
 
+## Project config for import resolution
+
+Some languages need a project file to turn an import into a path: TypeScript
+reads `paths`/`baseUrl` from `tsconfig.json`, Go the module path from
+`go.mod`, PHP the PSR-4 prefixes from `composer.json`. Read it with
+`BaseLanguage._nearest_config(directory, name, read)`; do not walk the file
+system yourself. Your handler supplies only the file name and `read`, which
+parses one file from its absolute path.
+
+The base owns where the search goes and caches it per analysis:
+
+- It may pass above the scanned directory, since a scan of `src/` still
+  belongs to the project whose config sits beside it.
+- It stops at the top of the repository the file is in (a `.git` directory,
+  or the `.git` file of a submodule or worktree), and at the scanned directory
+  when there is no repository. The config of another project around this one
+  never applies.
+
+The config is used only to map an import to a file of the scan. Paths
+computed from a config above the scanned directory are relative to that
+config, so turn them into project paths with `BaseLanguage._project_path`
+(`../src/x` under a scanned `src/` is `x`). An import that maps to no
+scanned file is a dependency and gets no edge; a config's dependency lists
+(`require`, `dependencies`) are not read.
+
+---
+
 ## Naming conventions and the public surface
 
 Everything outside `languages/` sees `StructureNode`s and never a syntax.

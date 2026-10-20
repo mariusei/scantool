@@ -52,7 +52,6 @@ class GoLanguage(BaseLanguage):
         super().__init__(**kwargs)
         self.parser = Parser()
         self.parser.language = Language(tree_sitter_go.language())
-        self._modules: dict[str, tuple[str, str] | None] = {}
         self._packages: tuple[list[str], dict[str, list[str]]] | None = None
 
     # ===========================================================================
@@ -837,14 +836,13 @@ class GoLanguage(BaseLanguage):
         the longest trailing part of the path that names a project package
         directory is taken, and a path whose first element has no dot is
         the standard library's (the go command reserves those paths)."""
-        root = os.path.abspath(self.root or "")
-        found = self._go_module(os.path.dirname(os.path.join(root, source_file)))
+        found = self._nearest_config(posixpath.dirname(source_file), "go.mod", _read_go_mod)
         if found is not None:
             module_dir, module_path = found
             if module != module_path and not module.startswith(module_path + "/"):
                 return None
             package = os.path.join(module_dir, *module[len(module_path) :].split("/"))
-            relative = os.path.relpath(package, root).replace(os.sep, "/")
+            relative = self._project_path(package)
             if relative == ".." or relative.startswith("../"):
                 return None  # a package of the module outside the scanned directory
             return "" if relative == "." else relative
@@ -857,26 +855,6 @@ class GoLanguage(BaseLanguage):
             if candidate in packages:
                 return candidate
         return None
-
-    def _go_module(self, directory: str) -> tuple[str, str] | None:
-        """(absolute directory, module path) of the go.mod governing an
-        absolute directory: the nearest go.mod at or above it, looked up
-        past the scanned root as the go command does, read once per
-        analysis; None when no directory above has one."""
-        if directory not in self._modules:
-            go_mod = os.path.join(directory, "go.mod")
-            parent = os.path.dirname(directory)
-            if os.path.isfile(go_mod):
-                with open(go_mod, encoding="utf-8", errors="replace") as f:
-                    match = self._MODULE_DIRECTIVE.search(f.read())
-                self._modules[directory] = (directory, match.group(1)) if match else None
-            elif parent == directory:
-                self._modules[directory] = None
-            else:
-                self._modules[directory] = self._go_module(parent)
-        return self._modules[directory]
-
-    _MODULE_DIRECTIVE = re.compile(r'^module\s+"?([^"\s]+)"?', re.MULTILINE)
 
     def _package_files(self, all_files: list[str]) -> dict[str, list[str]]:
         """Project directory -> its non-test .go files, the files a package
@@ -906,3 +884,17 @@ class GoLanguage(BaseLanguage):
             return f"  {ep.file}:{ep.name} @{ep.line}"
         else:
             return super().format_entry_point(ep)
+
+
+_MODULE_DIRECTIVE = re.compile(r'^module\s+"?([^"\s]+)"?', re.MULTILINE)
+
+
+def _read_go_mod(path: str) -> tuple[str, str] | None:
+    """(absolute directory, module path) of one go.mod; None when it names
+    no module or cannot be read."""
+    try:
+        with open(path, encoding="utf-8", errors="replace") as f:
+            match = _MODULE_DIRECTIVE.search(f.read())
+    except OSError:
+        return None
+    return (os.path.dirname(path), match.group(1)) if match else None

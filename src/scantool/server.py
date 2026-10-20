@@ -46,6 +46,7 @@ from .gitref import (
     stamp_ref,
 )
 from .languages import StructureNode, is_file_info_stub
+from .languages.base import repository_top
 from .languages.models import Sweep
 from .launcher import ensure_launcher, shell_hint, shell_instructions
 from .preview import preview_directory as preview_dir_func
@@ -439,16 +440,7 @@ def _focus_answer(
 def _in_git(file_path: str) -> bool:
     """A file on disk inside a git worktree: content read from stdin under a
     borrowed name has no history to follow."""
-    if not os.path.isfile(file_path):
-        return False
-    here = os.path.dirname(os.path.abspath(file_path))
-    while True:
-        if os.path.exists(os.path.join(here, ".git")):
-            return True
-        parent = os.path.dirname(here)
-        if parent == here:
-            return False
-        here = parent
+    return os.path.isfile(file_path) and repository_top(os.path.dirname(file_path)) is not None
 
 
 def _at_ref_file(file_path: str, ref: str, **kwargs) -> list[TextContent]:

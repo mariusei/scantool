@@ -545,9 +545,10 @@ def test_psr4_prefix_maps_a_namespace_to_its_directory(tmp_path):
 
 
 def test_psr4_applies_when_composer_json_is_above_the_scanned_directory(tmp_path):
-    """Scanning the autoloaded directory itself: composer.json is looked up
-    above the scanned root, as Composer does."""
+    """Scanning the autoloaded directory itself: composer.json sits above the
+    scanned root, inside the same repository, and still applies."""
     _write_tree(tmp_path)
+    (tmp_path / ".git").mkdir()
     imports = _psr4_imports(tmp_path / "src")
 
     assert imports["App.php"] == ["Routing/Route.php"]

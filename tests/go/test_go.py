@@ -401,11 +401,12 @@ def test_import_outside_the_module_is_not_a_project_package(tmp_path):
 
 
 def test_go_mod_above_the_scanned_directory_still_names_the_packages(tmp_path):
-    """Scanning a subdirectory of a module: go.mod is looked up above the
-    scanned root, as the go command does."""
+    """Scanning a subdirectory of a module: go.mod sits above the scanned
+    root, inside the same repository, and still names the packages."""
     _write(
         tmp_path,
         {
+            ".git/HEAD": "ref: refs/heads/main\n",
             "go.mod": "module example.com/tool\n",
             "internal/a/a.go": "package a\n\nfunc A() {}\n",
             "internal/b/b.go": (

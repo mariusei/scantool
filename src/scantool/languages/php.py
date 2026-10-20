@@ -101,7 +101,6 @@ class PHPLanguage(BaseLanguage):
         super().__init__(**kwargs)
         self.parser = Parser()
         self.parser.language = Language(tree_sitter_php.language_php())
-        self._autoloads: dict[str, _Psr4 | None] = {}
 
     def _fragment_prefix(self) -> str:
         """Detached excerpts parse as HTML text without the PHP open tag."""
@@ -1178,8 +1177,7 @@ class PHPLanguage(BaseLanguage):
         order Composer tries them: longest matching namespace prefix first,
         each of its directories in order. Paths outside the scanned root
         are left out."""
-        root = os.path.abspath(self.root or "")
-        autoload = self._psr4(os.path.dirname(os.path.join(root, source_file)))
+        autoload = self._nearest_config(posixpath.dirname(source_file), "composer.json", _read_psr4)
         if autoload is None:
             return []
         candidates = []
@@ -1189,26 +1187,10 @@ class PHPLanguage(BaseLanguage):
             rest = module[len(prefix) :].split("\\")
             for directory in directories:
                 path = os.path.join(autoload.directory, directory, *rest) + ".php"
-                relative = os.path.relpath(path, root).replace(os.sep, "/")
+                relative = self._project_path(path)
                 if not relative.startswith("../"):
                     candidates.append(relative)
         return candidates
-
-    def _psr4(self, directory: str) -> "_Psr4 | None":
-        """The PSR-4 autoload of the nearest composer.json at or above an
-        absolute directory, looked up past the scanned root as Composer
-        does, read once per analysis; None when no directory above has a
-        composer.json or the nearest one cannot be read."""
-        if directory not in self._autoloads:
-            composer = os.path.join(directory, "composer.json")
-            parent = os.path.dirname(directory)
-            if os.path.isfile(composer):
-                self._autoloads[directory] = _read_psr4(composer)
-            elif parent == directory:
-                self._autoloads[directory] = None
-            else:
-                self._autoloads[directory] = self._psr4(parent)
-        return self._autoloads[directory]
 
     def _resolve_php_relative_path(self, current_file: str, relative_path: str) -> str | None:
         """`./config.php`, `../utils.php` (Unix-style, unlike Python's dot
