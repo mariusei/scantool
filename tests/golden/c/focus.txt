@@ -1,11 +1,11 @@
-basic.c::User (8-12)
-edges: no blank line above, 13 blank below
-next: sct history basic.c::User (the commits that changed it)
+basic.c::Pool.Address (56-59)
+edges: no blank line above, no blank line below
+next: sct history basic.c::Pool.Address (the commits that changed it)
 basic.c (1-83)
-- User @8 # User structure definition
-   8 | struct User {
-   9 |     int id;
-   10 |     char name[100];
-   11 |     char email[100];
-   12 | };
+- Pool @55 # Connection pool, its address record nested in it
+  - Address @56
+     56 |     struct Address {
+     57 |         char host[64];
+     58 |         int port;
+     59 |     } address;
 [exit 0]

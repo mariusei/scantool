@@ -1,4 +1,4 @@
-<1 file seen, 12 structures shown, 1 excluded (.git/)>
+<1 file seen, 13 structures shown, 1 excluded (.git/)>
 basic.c (8-12)
 - User @8 # User structure definition
    struct User {
