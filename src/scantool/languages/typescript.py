@@ -100,6 +100,8 @@ class TypeScriptLanguage(BaseLanguage):
     - extract_calls(): Find function/method calls
     """
 
+    SHEBANG_INTERPRETERS = ("node", "nodejs", "deno", "bun")
+
     CONDENSE_STRATEGY = "skeleton"
     ATTACHED_PREFIX_TYPES = ("decorator",)
     ATTACHED_PREFIX_SKIP = ("comment",)

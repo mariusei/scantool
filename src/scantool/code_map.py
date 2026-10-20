@@ -311,16 +311,13 @@ class CodeMap:
         return files
 
     def _get_analyzer(self, file_path: str):
-        """The handler for a file's extension, one instance per class for
-        the analysis (a handler may cache project config it reads while
-        resolving imports); the generic handler for an unknown extension."""
-        ext = Path(file_path).suffix
-        if not ext:
-            return None
-
-        analyzer_class = self.registry.get_analyzer(ext)
+        """The handler for a file (by extension or `#!` line), one
+        instance per class for the analysis (a handler may cache project
+        config it reads while resolving imports); the generic handler for an
+        unknown extension, None for an unrecognised file without one."""
+        analyzer_class = self.registry.get_class_for(str(self.directory / file_path))
         if not analyzer_class:
-            return self.generic_language
+            return self.generic_language if Path(file_path).suffix else None
         if analyzer_class not in self._analyzers:
             self._analyzers[analyzer_class] = analyzer_class(root=str(self.directory))
         return self._analyzers[analyzer_class]
@@ -858,7 +855,7 @@ class CodeMap:
         def worth_listing(f: FileNode) -> bool:
             if f.path in important_files:
                 return True
-            analyzer_class = registry.get_analyzer(Path(f.path).suffix)
+            analyzer_class = registry.get_class_for(str(self.directory / f.path))
             return not (
                 analyzer_class and analyzer_class().is_low_value_for_inventory(f.path, f.size)
             )

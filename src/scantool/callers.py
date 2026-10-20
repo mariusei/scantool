@@ -115,7 +115,7 @@ def format_callers(found: Callers, label: str) -> str:
         )
     registry = get_registry()
     for file, line, kind, parent in found.definitions:
-        language = registry.get(os.path.splitext(file)[1].lower())
+        language = registry.get_for(file)
         qualifier = language.QUALIFIER if language else "."
         qualified = f"{parent}{qualifier}{bare}" if parent else bare
         lines.append(f"defined: {file}::{qualified} ({kind}) {file}:{line}")

@@ -151,7 +151,7 @@ class FileScanner:
             List of StructureNode objects, or None if file type not supported
         """
         path = Path(filename)
-        scanner_class = self.registry.get_scanner(path.suffix.lower())
+        scanner_class = self.registry.get_class_for(filename, content)
         if not scanner_class:
             return None  # Unsupported file type
 
@@ -288,8 +288,7 @@ class FileScanner:
             raise FileNotFoundError(f"File not found: {file_path}")
 
         # Get appropriate scanner for this file type
-        suffix = path.suffix.lower()
-        scanner_class = self.registry.get_scanner(suffix)
+        scanner_class = self.registry.get_class_for(str(path))
 
         if not scanner_class:
             return None  # Unsupported file type
@@ -619,7 +618,7 @@ class FileScanner:
 
                 seen_files.add(file_str)
 
-                scanner_class = self.registry.get_scanner(file_path.suffix.lower())
+                scanner_class = self.registry.get_class_for(str(file_path))
                 if scanner_class:
                     if scanner_class.should_skip(file_path.name):
                         sweep.excluded[f"*{file_path.suffix}"] += 1

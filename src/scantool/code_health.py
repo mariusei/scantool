@@ -33,7 +33,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from textwrap import dedent
 
-from .languages import get_language, is_file_info_stub
+from .languages import get_language_for, is_file_info_stub
 
 # Structural node types that are never definitions worth flagging
 _SKIP_TYPES = {
@@ -182,7 +182,7 @@ def _entry_point_names(results, contents) -> set[str]:
     for mains, which _UNIVERSAL_ROOTS covers regardless of language."""
     names = set()
     for file_path in results:
-        lang = get_language(Path(file_path).suffix.lower())
+        lang = get_language_for(file_path)
         if lang is None:
             continue
         try:
@@ -206,7 +206,7 @@ def _find_unreferenced(definitions, rooted, results, contents) -> list[Definitio
     # language gaps only mean fewer exclusions, never a wrong flag.
     languages = {}
     for file_path in results:
-        languages[file_path] = get_language(Path(file_path).suffix.lower())
+        languages[file_path] = get_language_for(file_path)
 
     flagged = []
     for d in definitions:
