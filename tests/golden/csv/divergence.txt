@@ -1,0 +1,2 @@
+.: no call graph to analyze (peer divergence needs code with cross-function calls)
+[exit 0]

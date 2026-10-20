@@ -1,0 +1,7 @@
+order_id,placed_on,customer,amount,currency,paid,note
+1001,2024-03-01,Ada Lovelace,19.99,EUR,true,
+1002,2024-03-02,"Hopper, Grace",5,USD,false,"gift, wrapped"
+1003,2024-03-04,Alan Turing,120.50,GBP,true,"two
+lines"
+1004,2024-03-05,Edsger Dijkstra,7.25,EUR,true,
+1005,2024-03-07,Barbara Liskov,64.00,USD,false,

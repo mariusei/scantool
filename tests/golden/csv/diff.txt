@@ -1,0 +1,10 @@
+<1 file changed, 1 with structural rows> v1 → v2
+next: sct focus basic.csv::paid@v2 (the largest changed body in full; @v1 for the old one)
+
+basic.csv  (+1 ~2)
+  + currency col 5, text        B:1
+  ~ paid col 6, bool            A:1 → B:1   [signature: col 5, bool → col 6, bool]
+  ~ note col 7, text or empty   A:1 → B:1   [signature: col 6, text or empty → col 7, text or empty]
+
+summary: 1 file, +1 ~2 structures
+[exit 0]

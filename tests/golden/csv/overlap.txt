@@ -1,0 +1,12 @@
+<2 branches vs v1, 2 with structural changes; parts: branches 3, shared 4, colliding 2, order 1> base v1 (f7e2f4d)
+branches:
+a  merge-base f7e2f4d  1 ahead 0 behind  1 file, +1 ~2 -0 structures
+b  merge-base f7e2f4d  1 ahead 0 behind  1 file, +1 ~2 -0 structures
+shared: overlap (structures touched by 2+ branches): 3 in 1 file
+  basic.csv::currency   a(+)  b(+)
+  basic.csv::note       a(~)  b(~)
+  basic.csv::paid       a(~)  b(~)
+colliding: colliding new names (added independently on 2+ branches): 1
+  currency   a:basic.csv:1  b:basic.csv:1
+order: merge order (a hint, not a verdict): a < b   (all share 3 structures; ordered by change size, a touches 3 and b touches 3)
+[exit 0]

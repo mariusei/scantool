@@ -43,6 +43,7 @@ SAMPLES = {
     "cpp": "c_cpp/samples/basic.cpp",
     "csharp": "csharp/samples/Basic.cs",
     "css": "css/basic.css",
+    "csv": "csv/samples/basic.csv",
     "go": "go/samples/basic.go",
     "html": "html/basic.html",
     "java": "java/samples/Basic.java",
