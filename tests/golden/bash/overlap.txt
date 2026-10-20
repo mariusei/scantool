@@ -1,0 +1,14 @@
+<2 branches vs v1, 2 with structural changes; parts: branches 3, shared 6, colliding 2, order 1> base v1 (2bbf222)
+branches:
+a  merge-base 2bbf222  1 ahead 0 behind  1 file, +2 ~2 -1 structures
+b  merge-base 2bbf222  1 ahead 0 behind  1 file, +2 ~2 -1 structures
+shared: overlap (structures touched by 2+ branches): 5 in 1 file
+  basic.sh::DEFAULT_HOST       a(~)  b(~)
+  basic.sh::_upload            a(-)  b(-)
+  basic.sh::_upload_artifact   a(+)  b(+)
+  basic.sh::deploy             a(~)  b(~)
+  basic.sh::target_host        a(+)  b(+)
+colliding: colliding new names (added independently on 2+ branches): 1
+  target_host   a:basic.sh:50  b:basic.sh:50
+order: merge order (a hint, not a verdict): a < b   (all share 5 structures; ordered by change size, a touches 5 and b touches 5)
+[exit 0]

@@ -1,0 +1,11 @@
+basic.sh::deploy.cleanup (37-40)
+edges: no blank line above, no blank line below
+next: sct callers cleanup (its call sites) · sct history basic.sh::deploy.cleanup (the commits that changed it)
+basic.sh (1-58)
+- deploy @35
+  - cleanup @37
+     37 |   cleanup() {
+     38 |     rm -rf "$workdir"
+     39 |     log_info "removed $workdir"
+     40 |   }
+[exit 0]

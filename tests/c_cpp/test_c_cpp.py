@@ -468,3 +468,96 @@ def test_surface_lists_a_public_constant_and_not_a_static_one(tmp_path):
         ("LIMIT", "variable"),
         ("utils.STEP", "variable"),
     ]
+
+
+def test_local_class_method_calls_attribute_to_enclosing_function():
+    """A class declared inside a function body is not extracted, so calls in
+    its methods belong to the enclosing function.
+
+    Regression: Node addons declare `struct Worker : Napi::AsyncWorker` inside
+    the function that queues it. Attributing calls to `Execute`/`OnOK` (not
+    definitions, so not graph nodes) dropped those edges from the call graph.
+    """
+    src = (
+        "void helper() {}\n"
+        "void run() {\n"
+        "    struct Worker {\n"
+        "        void Execute() { helper(); }\n"
+        "    };\n"
+        "    Worker w;\n"
+        "    w.Execute();\n"
+        "}\n"
+    )
+    lang = get_language(".cpp")
+    defs = lang.extract_definitions("w.cpp", src)
+    calls = lang.extract_calls("w.cpp", src, defs)
+
+    helper_calls = [c for c in calls if c.callee_name == "helper"]
+    assert helper_calls, "helper() call was not captured at all"
+    assert all(c.caller_name == "run" for c in helper_calls), [c.caller_name for c in helper_calls]
+
+
+def _definitions_and_callers(src: str, filename: str) -> tuple[set[str], dict[str, str | None]]:
+    lang = get_language("." + filename.rsplit(".", 1)[1])
+    defs = lang.extract_definitions(filename, src)
+    calls = lang.extract_calls(filename, src, defs)
+    return {d.name for d in defs}, {c.callee_name: c.caller_name for c in calls}
+
+
+def test_definitions_inside_a_macro_wrapped_namespace_are_extracted():
+    """`MACRO namespace x { ... }` parses as a function definition with no
+    function name; the definitions in its block are still extracted.
+
+    Regression: fmt opens namespaces with `FMT_BEGIN_NAMESPACE`, which hid
+    `parse_format_specs` and most of `fmt/core.h`.
+    """
+    src = (
+        "FMT_BEGIN_NAMESPACE\n"
+        "namespace detail {\n"
+        "template <typename T> auto twice(T v) -> T { return add(v, v); }\n"
+        "}  // namespace detail\n"
+        "FMT_END_NAMESPACE\n"
+    )
+    names, callers = _definitions_and_callers(src, "core.h")
+    assert "twice" in names
+    assert callers["add"] == "twice"
+
+
+def test_definitions_inside_a_parse_error_are_extracted():
+    """An `#ifdef` that selects between two function headers sharing one body
+    does not parse; the definition inside the ERROR node is still extracted.
+
+    Regression: jq's `main` (behind `#ifdef WIN32 ... wmain`) was not a
+    definition, and a failed include guard hid all of `fmt/format.h`.
+    """
+    src = (
+        "#ifdef WIN32\n"
+        "int wmain(int argc, wchar_t* argv[]) {\n"
+        "#else\n"
+        "int main(int argc, char* argv[]) {\n"
+        "#endif\n"
+        "  return run(argc);\n"
+        "}\n"
+    )
+    names, callers = _definitions_and_callers(src, "main.c")
+    assert "main" in names
+    assert callers["run"] == "main"
+
+
+def test_struct_in_a_return_type_and_pointer_returning_functions():
+    """A struct defined in a function's return type is extracted, a struct
+    only named there is not, and a function returning a pointer is a
+    definition with its parameters in the signature."""
+    src = (
+        "struct point { int x; } origin(void) { struct point p = {0}; return p; }\n"
+        "struct point *find(int x) { return lookup(x); }\n"
+    )
+    structures = FileScanner().scan_content(src, "geo.c")
+    assert [(n.type, n.name) for n in structures] == [
+        ("struct", "point"),
+        ("function", "origin"),
+        ("function", "find"),
+    ]
+    assert structures[2].signature == "struct point *(int x)"
+    _, callers = _definitions_and_callers(src, "geo.c")
+    assert callers["lookup"] == "find"

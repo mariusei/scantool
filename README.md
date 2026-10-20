@@ -316,6 +316,7 @@ scantool does not attempt it.
 | `.rb` | Ruby | modules, classes, methods, singleton methods, constants |
 | `.zig` | Zig | functions, structs, enums, unions, tests, constants |
 | `.swift` | Swift | classes, structs, enums, protocols, functions, extensions, constants |
+| `.sh`, `.bash` | Bash | functions, file-scope variables and exports, comment blocks, `source` and script-execution edges |
 | `.sql` | SQL | tables, views, functions, procedures, indexes, columns |
 | `.html` | HTML | document structure, elements, attributes |
 | `.css` | CSS | selectors, properties, media queries |

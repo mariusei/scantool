@@ -1,0 +1,7 @@
+<2 call sites in 1 file, 1 definition, 1 file scanned> callers of usage
+defined: basic.sh::usage (function) basic.sh:16
+
+basic.sh  (2 sites)
+  - main basic.sh:50   [[ $# -ge 1 ]] || usage 1
+  - (module level) basic.sh:55   usage
+[exit 0]

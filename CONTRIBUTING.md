@@ -1,6 +1,10 @@
 # Contributing to Scantool
 
-This guide covers how to add support for a new programming language.
+This guide covers how to add support for a new programming language. A
+handler is done when real code in that language comes out connected — calls
+attributed, imports resolved, definitions reachable — not when its files
+parse. Read [Depth](#depth-what-a-language-handler-must-connect) before you
+start; it decides what you build.
 
 ## Architecture Overview
 
@@ -24,6 +28,96 @@ src/scantool/
 ├── entropy/                # Saliency analysis (uses languages/ for function detection)
 └── server.py               # MCP server tools
 ```
+
+## Depth: what a language handler must connect
+
+Parsing a file into a tree of classes and functions is the first of several
+layers. The tools that make scantool more than an outline — callers, hot
+functions, dead-code detection, peer divergence, importer counts, the public
+surface — each read a later layer. A handler that stops after structure gives
+an outline that answers nothing about how the code fits together.
+
+| Layer | What the reader gets | Hooks | Checked by |
+|-------|----------------------|-------|------------|
+| Structure | `scan`, `focus`, `search` hits in their function | `_extract_structure`, `REGEX_FALLBACK_PATTERNS` | golden snapshot (`tests/test_golden.py`) |
+| Call edges | `callers`, hot functions, divergence | `extract_calls` | caller-resolution contract; depth measurement |
+| Import edges | importer counts, file centrality, `next:` pointers | `extract_imports`, `resolve_import_to_file`, `resolve_import_targets` | depth measurement |
+| Reachability | dead-code detection without false positives | `is_offgraph_reachable`, `is_exempt_from_unreferenced`, `corpus_reachable` | reachability contract |
+| Surface and naming | `surface`, private vs public | `is_private`, `is_private_name`, `public_surface` | `tests/test_language_conventions.py` |
+| Condensed excerpts | code shown as a skeleton, not verbatim | `CONDENSE_STRATEGY`, `condense_excerpt` | golden snapshot |
+
+A layer can legitimately not apply (a config format has no calls). Say so in
+the pull request, with the reason; do not leave it empty by omission.
+
+### Decide what an edge is before you write code
+
+The hooks are shaped after languages with functions calling functions and
+modules importing modules. Copying an existing handler into a language with a
+different shape gives one that parses and connects nothing. Before writing the
+handler, write down what a call and an import are in this language, from how
+code in it is actually organised:
+
+- In a shell, functions calling functions inside one script is the minor case.
+  The edges that matter are `source`/`.` of another file and running another
+  script of the project (`./build.sh`, `bash scripts/x.sh`).
+- In a language where one file sees every other file of its package without
+  an import (Go within a package), import edges between those files do not
+  exist; the call edges carry the structure.
+- In a language with heavy macro use (C, C++), a macro invocation followed by a
+  block can parse as a function definition. The handler must not treat it as
+  one.
+
+### Measure on real code
+
+The samples in `tests/LANG/samples/` are small and written by the handler's
+author, so they rarely contain the constructs that break attribution. A
+handler that passes every test can still drop thousands of edges on a real
+project. `scripts/language_depth.py` runs the same analysis the tools run on
+one pinned public project per language and reports how much of it is
+connected:
+
+```bash
+uv run python scripts/language_depth.py            # every corpus, against the baseline
+uv run python scripts/language_depth.py cpp rust   # some corpora
+uv run python scripts/language_depth.py --update   # write the baseline
+```
+
+| Column | Meaning |
+|--------|---------|
+| `files` | files of the language in the corpus |
+| `defs/file`, `calls/file` | definitions and call sites the handler extracted |
+| `dropped` | calls whose caller is not an extracted definition; must be 0 |
+| `defs called` | share of definitions some call in the corpus reaches |
+| `files linked` | share of files with at least one resolved import edge |
+
+A cell that changed from the baseline shows as `before→after`. The baseline
+(`scripts/language_depth_baseline.json`) is the current state of every handler;
+a non-zero `dropped` there is an open defect.
+
+`dropped == 0` alone is not enough. A handler can meet it by attributing a
+call to nothing: the edge then disappears without being counted. Check that
+`calls/file` and `defs called` did not fall with the fix.
+
+The script needs the network and takes minutes, so CI does not run it. Every
+defect it finds becomes a minimal unit test in `tests/LANG/` (see
+`tests/c_cpp/test_c_cpp.py::test_local_class_method_calls_attribute_to_enclosing_function`),
+which CI does run.
+
+**Adding a corpus.** Add an entry to `scripts/language_depth.toml`: a real,
+maintained project with a permissive licence and a few dozen to a few hundred
+source files, pinned to a full commit SHA. The corpus is cloned into a cache
+outside the repository and nothing from it is committed. Measure on public
+code only: a pull request, a commit message and the baseline are public, and
+numbers from a private codebase carry its paths and names with them.
+
+### Grammars and dependencies
+
+Every dependency is installed by every user of the package, on Linux, macOS
+and Windows and on each supported Python version. Check
+`tree-sitter-language-pack` (already a dependency) first; it ships grammars for
+bash, PowerShell, XML, Makefile, Dockerfile and many more. Add a separate
+`tree-sitter-*` package only when the pack lacks the grammar and the package
+publishes wheels for every platform and Python version in the CI matrix.
 
 ## Adding a New Language
 
@@ -456,7 +550,14 @@ def should_analyze(self, file_path: str) -> bool:
 | `should_analyze()` | Skip file after reading | Returns `True` |
 | `classify_file()` | Categorize file | Path-based heuristics |
 | `resolve_import_to_file()` | Map import to file path | Returns `None` |
+| `resolve_import_targets()` | Every project file one import binds | `resolve_import_to_file()` as a one-element list |
+| `is_offgraph_reachable()` | Reached by a channel the call graph cannot see | Returns `True` (never claims dead) |
+| `is_private()` / `is_private_name()` | Outside the public surface | Leading underscore |
+| `public_surface()` | Public names of a package directory | Top-level definitions not marked private |
+| `condense_excerpt()` | Excerpt as skeleton | Driven by `CONDENSE_STRATEGY` |
 | `format_entry_point()` | Display formatting | Default format |
+
+Which layer each hook belongs to: [Depth](#depth-what-a-language-handler-must-connect).
 
 ---
 
@@ -512,21 +613,19 @@ print(caller_resolution_health(r.definitions, r.calls))  # .dropped should be 0
 verified-clean languages at `dropped == 0` (a regression ratchet). When you add or
 fix a language, add it to `_CONTRACT_CLEAN`.
 
-**Rollout status** (audited on the sample fixtures):
+**Status.** Every language with call extraction is clean on its samples and
+locked in `_CONTRACT_CLEAN`. On real code the samples are not the last word:
+the `dropped` column of `scripts/language_depth_baseline.json` is the status
+on each language's public corpus (see [Measure on real code](#measure-on-real-code)).
 
-- **Clean (locked):** python, typescript, go, rust, c#, php, c/cpp.
-- **Known violators (need a per-language `extract_calls` fix, each its own cause):**
-  - `swift` — initializer/property-wrapper calls (`init`/`deinit`/`wrappedValue`)
-    not attributed to an extracted definition.
-  - `ruby` — e.g. `create_default` not resolving to an emitted definition.
-  - `zig` — `deinit` not resolved.
-  - `java` — an occasional unresolved caller.
-
-  Fix pattern: run the metric, read each `top_dropped` name, decide whether it
-  should be (a) emitted as a definition or (b) attributed to its enclosing
-  definition; fix the language's `extract_calls`; move the language into
-  `_CONTRACT_CLEAN`. Do NOT touch `call_graph.py` — the gap is always in the
-  language extractor, by design.
+Fix pattern: run the metric, read each `top_dropped` name, decide whether it
+should be (a) emitted as a definition or (b) attributed to its enclosing
+definition. Prefer (a) when the reader would want to find it with `scan` or
+`focus`: (b) makes the edge resolve but moves the call to the enclosing
+definition, and if there is none the call is lost. Fix the language's
+`extract_calls` or `_extract_structure`, add a unit test with the construct
+that broke it, and rerun the depth measurement. Do NOT touch `call_graph.py` —
+the gap is always in the language extractor, by design.
 
 ---
 
@@ -699,9 +798,15 @@ prefix, qualifier, dunder) anywhere outside `languages/`.
 
 ## Checklist for New Languages
 
+- [ ] Write down what a call and an import are in the language
+      ([Decide what an edge is](#decide-what-an-edge-is-before-you-write-code))
 - [ ] Create `src/scantool/languages/LANG.py`
 - [ ] Implement required methods (metadata, scan, imports, entry points)
-- [ ] Add tree-sitter dependency to `pyproject.toml`
+- [ ] Use the grammar from `tree-sitter-language-pack` if it has one; otherwise
+      add a `tree-sitter-*` dependency that ships wheels for the whole CI matrix
+- [ ] Add a pinned public corpus to `scripts/language_depth.toml`, run
+      `scripts/language_depth.py LANG --update`, and put the row in the PR:
+      `dropped` 0, and every other layer either connected or explained
 - [ ] Create test directory: `tests/LANG/samples/`
 - [ ] Create test file: `tests/LANG/test_LANG.py`
 - [ ] Freeze the output format: add a `basic.*` sample, add the language

@@ -1,0 +1,11 @@
+<1 file changed, 1 with structural rows> v1 → v2
+next: sct focus basic.sh::deploy@v2 (the largest changed body in full; @v1 for the old one)
+
+basic.sh  (+1 ~2 =1)
+  + target_host                             B:50
+  ~ DEFAULT_HOST = "releases.example.com"   A:9 → B:9   [value: "staging.example.com" → "releases.example.com"]
+  ~ deploy                                  A:35 → B:35   [body: 1 code line]
+  = _upload_artifact                        A:22 → B:22   [renamed from _upload]
+
+summary: 1 file, +1 ~2 =1 structures
+[exit 0]

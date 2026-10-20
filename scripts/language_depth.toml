@@ -1,0 +1,101 @@
+# Public corpora for scripts/language_depth.py, one per language handler.
+#
+# Each entry is pinned to a commit so a measurement is reproducible and a
+# change in the numbers comes from scantool, not from the corpus. `path` is
+# the directory that is analysed; `extensions` are the files counted as the
+# language's own (other files in the tree still take part in the analysis).
+#
+# Choose a real, maintained project with a permissive licence and a few
+# dozen to a few hundred source files. The corpus is cloned at measurement
+# time into a cache outside the repository; nothing from it is committed.
+
+[[corpus]]
+language = "python"
+repo = "pallets/click"
+commit = "2247b35ea1c47c727d7a06e51fa280e12a863ff6"
+path = "src/click"
+extensions = [".py"]
+
+[[corpus]]
+language = "typescript"
+repo = "colinhacks/zod"
+commit = "afdac65e0f80c0ccf9e8909da97c411567908b57"
+path = "packages/zod/src"
+extensions = [".ts", ".tsx"]
+
+[[corpus]]
+language = "go"
+repo = "spf13/cobra"
+commit = "adbc8813901bba65827259daa8e22ff94ec1f30e"
+path = "."
+extensions = [".go"]
+
+[[corpus]]
+language = "rust"
+repo = "BurntSushi/ripgrep"
+commit = "3fce3b5bb0236da2df6d99672afb8a719642eca7"
+path = "crates"
+extensions = [".rs"]
+
+[[corpus]]
+language = "java"
+repo = "google/gson"
+commit = "e2292f9c9f2e07a4791827e8eea34aa7d80545d6"
+path = "gson/src/main/java"
+extensions = [".java"]
+
+[[corpus]]
+language = "csharp"
+repo = "JamesNK/Newtonsoft.Json"
+commit = "52fa3aef1f2cadcd3a3f874251eddc98d3efbbaa"
+path = "Src/Newtonsoft.Json"
+extensions = [".cs"]
+
+[[corpus]]
+language = "cpp"
+repo = "fmtlib/fmt"
+commit = "0fc31633e7d53ac895ae0a688b83b7d44f0b0c1f"
+path = "."
+extensions = [".cc", ".cpp", ".h"]
+
+[[corpus]]
+language = "c"
+repo = "jqlang/jq"
+commit = "633ae6058a05b0240c798f6b7b60d3b0a87cab8e"
+path = "src"
+extensions = [".c", ".h"]
+
+[[corpus]]
+language = "php"
+repo = "slimphp/Slim"
+commit = "3675bf6baac66b07032575b7bef4200b60b7974b"
+path = "Slim"
+extensions = [".php"]
+
+[[corpus]]
+language = "ruby"
+repo = "sinatra/sinatra"
+commit = "cb22afd7902b566b6eaba6c4ea89739494a65d12"
+path = "lib"
+extensions = [".rb"]
+
+[[corpus]]
+language = "swift"
+repo = "Alamofire/Alamofire"
+commit = "bda9ed57d72988a3a2ada33d824583541f86eac6"
+path = "Source"
+extensions = [".swift"]
+
+[[corpus]]
+language = "zig"
+repo = "zigtools/zls"
+commit = "3f662a11ad8fd8698eda4521dd60b524c9eac0e2"
+path = "src"
+extensions = [".zig"]
+
+[[corpus]]
+language = "bash"
+repo = "Bash-it/bash-it"
+commit = "ee8396b5a049ae648b9a75575507984d27a119bb"
+path = "."
+extensions = [".sh", ".bash"]
