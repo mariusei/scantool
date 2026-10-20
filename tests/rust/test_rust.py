@@ -380,3 +380,34 @@ def test_surface_lists_a_pub_constant_not_a_crate_private_one(tmp_path):
     )
     rows = [(e.name, e.kind, e.signature) for e in read_surface(str(tmp_path)).exports]
     assert rows == [("LIMIT", "variable", "= 3"), ("f", "function", "()")]
+
+
+def test_nested_fn_call_attribution():
+    """A call inside a fn nested in a fn body attributes to the enclosing
+    EXTRACTED definition, not the un-extracted nested fn (ripgrep's `fn imp`
+    idiom). Otherwise caller_name resolves to no definition and the edge drops.
+    """
+    from scantool.languages.rust import RustLanguage
+
+    src = (
+        "pub fn is_hidden(path: &str) -> bool {\n"
+        "    fn imp(path: &str) -> bool {\n"
+        "        helper(path)\n"
+        "    }\n"
+        "    imp(path)\n"
+        "}\n"
+        "fn helper(path: &str) -> bool {\n"
+        "    path.is_empty()\n"
+        "}\n"
+    )
+    lang = RustLanguage()
+    defs = lang.extract_definitions("a.rs", src)
+    calls = lang.extract_calls("a.rs", src, defs)
+
+    helper_calls = [c for c in calls if c.callee_name == "helper"]
+    assert helper_calls, "helper(...) call was not captured at all"
+    assert all(c.caller_name == "is_hidden" for c in helper_calls), [
+        c.caller_name for c in helper_calls
+    ]
+    def_names = {d.name for d in defs}
+    assert all(c.caller_name in def_names for c in calls)

@@ -1039,18 +1039,21 @@ class RustLanguage(BaseLanguage):
     ) -> list[CallInfo]:
         """Extract calls using tree-sitter AST."""
         calls = []
+        def_names = {d.name for d in definitions}
         current_function = None
 
         def traverse(node, context_func=None):
             nonlocal current_function
 
-            # Track current function context
+            # Track current function context. Functions nested in function
+            # bodies are not emitted as definitions, so only switch caller
+            # when the name resolves to one; otherwise keep the enclosing caller.
             if node.type == "function_item":
                 name_node = node.child_by_field_name("name")
                 if name_node:
-                    current_function = source_bytes[
-                        name_node.start_byte : name_node.end_byte
-                    ].decode("utf-8")
+                    name = source_bytes[name_node.start_byte : name_node.end_byte].decode("utf-8")
+                    if name in def_names:
+                        current_function = name
 
                 for child in node.children:
                     traverse(child, current_function)
