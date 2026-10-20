@@ -1,0 +1,98 @@
+{
+  "c": {
+    "calls_per_file": 140.8864,
+    "defs_called": 0.7776,
+    "defs_per_file": 19.9091,
+    "dropped_callers": 600,
+    "files": 44,
+    "files_import_linked": 0.9773
+  },
+  "cpp": {
+    "calls_per_file": 229.0822,
+    "defs_called": 0.683,
+    "defs_per_file": 49.3836,
+    "dropped_callers": 1603,
+    "files": 73,
+    "files_import_linked": 0.9452
+  },
+  "csharp": {
+    "calls_per_file": 40.0913,
+    "defs_called": 0.7168,
+    "defs_per_file": 12.5685,
+    "dropped_callers": 0,
+    "files": 241,
+    "files_import_linked": 0.8008
+  },
+  "go": {
+    "calls_per_file": 122.4167,
+    "defs_called": 0.4309,
+    "defs_per_file": 17.0,
+    "dropped_callers": 0,
+    "files": 36,
+    "files_import_linked": 0.0
+  },
+  "java": {
+    "calls_per_file": 29.7674,
+    "defs_called": 0.7925,
+    "defs_per_file": 10.3488,
+    "dropped_callers": 0,
+    "files": 86,
+    "files_import_linked": 0.8953
+  },
+  "php": {
+    "calls_per_file": 6.5833,
+    "defs_called": 0.557,
+    "defs_per_file": 5.2361,
+    "dropped_callers": 0,
+    "files": 72,
+    "files_import_linked": 0.0
+  },
+  "python": {
+    "calls_per_file": 120.2353,
+    "defs_called": 0.7219,
+    "defs_per_file": 37.8235,
+    "dropped_callers": 0,
+    "files": 17,
+    "files_import_linked": 1.0
+  },
+  "ruby": {
+    "calls_per_file": 132.0,
+    "defs_called": 0.5157,
+    "defs_per_file": 36.5714,
+    "dropped_callers": 0,
+    "files": 7,
+    "files_import_linked": 0.8571
+  },
+  "rust": {
+    "calls_per_file": 140.0421,
+    "defs_called": 0.6721,
+    "defs_per_file": 39.1789,
+    "dropped_callers": 73,
+    "files": 95,
+    "files_import_linked": 0.9053
+  },
+  "swift": {
+    "calls_per_file": 47.1591,
+    "defs_called": 0.6933,
+    "defs_per_file": 28.6364,
+    "dropped_callers": 0,
+    "files": 44,
+    "files_import_linked": 0.9318
+  },
+  "typescript": {
+    "calls_per_file": 144.3494,
+    "defs_called": 0.4126,
+    "defs_per_file": 7.1536,
+    "dropped_callers": 0,
+    "files": 332,
+    "files_import_linked": 0.5633
+  },
+  "zig": {
+    "calls_per_file": 202.6829,
+    "defs_called": 0.7726,
+    "defs_per_file": 23.7073,
+    "dropped_callers": 0,
+    "files": 41,
+    "files_import_linked": 0.9512
+  }
+}
