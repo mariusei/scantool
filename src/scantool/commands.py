@@ -177,8 +177,6 @@ def _file_in(name: str, directory: str, ref: str | None) -> str | None:
     if not is_address and ref is None and not os.path.isfile(path):
         return None
     if not is_address and ref is not None:
-        if not os.path.splitext(path)[1]:
-            return None
         try:
             top, rel = repo_and_rel(path)
             if ref_kind(top, ref, rel) != "blob":

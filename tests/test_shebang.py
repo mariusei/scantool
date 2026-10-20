@@ -62,3 +62,32 @@ def test_code_map_analyses_extensionless_scripts(tmp_path):
         ("libexec/tool", "main"),
         ("libexec/tool-lib", "shared"),
     }
+
+
+def test_callers_of_an_extensionless_file_at_a_ref(tmp_path, monkeypatch):
+    """At a ref, a path without an extension is a file when the ref holds
+    one, as on disk: `sct callers libexec/tool-lib --ref HEAD` lists the
+    scripts that source it instead of searching for a symbol of that name."""
+    import shutil
+    import subprocess
+
+    from scantool.commands import callers
+
+    if shutil.which("git") is None:
+        pytest.skip("needs git")
+    (tmp_path / "libexec").mkdir()
+    (tmp_path / "libexec" / "tool").write_text(
+        '#!/usr/bin/env bash\nsource "$(dirname "$0")/tool-lib"\nshared\n'
+    )
+    (tmp_path / "libexec" / "tool-lib").write_text("#!/usr/bin/env bash\nshared() { :; }\n")
+    for args in (
+        ["init", "-q"],
+        ["add", "."],
+        ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "v1"],
+    ):
+        subprocess.run(["git", *args], cwd=tmp_path, check=True)
+    monkeypatch.chdir(tmp_path)
+
+    text, code = callers("libexec/tool-lib", ".", ref="HEAD")
+    assert code == 0
+    assert "libexec/tool:2" in text, text
