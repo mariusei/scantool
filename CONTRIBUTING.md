@@ -119,6 +119,13 @@ bash, PowerShell, XML, Makefile, Dockerfile and many more. Add a separate
 `tree-sitter-*` package only when the pack lacks the grammar and the package
 publishes wheels for every platform and Python version in the CI matrix.
 
+A packed grammar is not reliable by default: measure the share of lines it
+puts inside ERROR nodes on the corpus before building on it. The make grammar
+misreads shell syntax inside `$(shell ...)`, so `make.py` parses a copy with
+those spans blanked to the same length (4.0 % → 0.5 % of lines in ERROR). The
+dockerfile grammar left 35 % of the lines of 58 real Dockerfiles in ERROR, so
+`dockerfile.py` reads the line-based format itself and overrides `scan()`.
+
 ## Adding a New Language
 
 Create a single file in `src/scantool/languages/` that inherits from `BaseLanguage`.

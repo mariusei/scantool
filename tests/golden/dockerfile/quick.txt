@@ -1,0 +1,20 @@
+<1 file seen, 8 structures shown>
+basic.Dockerfile (2-28)
+- Build the server in one stage and ship it in a slim one. @2
+- GO_VERSION = 1.22 @4 [arg]
+- builder FROM golang:${GO_VERSION} @7 # Compile the binary with the project's build script.
+  - CGO_ENABLED = 0 @11 [env]
+  - GOFLAGS = -trimpath @12 [env]
+- test FROM builder @16
+- debian FROM debian:bookworm-slim @20 # The runtime image.
+   20 | FROM debian:bookworm-slim
+   21 | COPY --from=builder /out/server /usr/local/bin/server
+   22 | COPY docker-entrypoint.sh /usr/local/bin/
+   23 | COPY --chmod=0755 files/tools/* /usr/local/bin/
+   24 | ENV PATH=/opt/tools:$PATH
+   25 | RUN install-deps --minimal
+   26 | EXPOSE 8080
+   27 | ENTRYPOINT ["docker-entrypoint.sh"]
+   28 | CMD ["server"]
+  - PATH = /opt/tools:$PATH @24 [env]
+[exit 0]

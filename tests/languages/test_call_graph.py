@@ -37,6 +37,7 @@ _CONTRACT_CLEAN = [
     "ipynb",
     "bash",
     "make",
+    "dockerfile",
 ]
 
 

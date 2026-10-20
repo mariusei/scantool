@@ -116,3 +116,10 @@ repo = "dotnet/BenchmarkDotNet"
 commit = "19c7a9ac3e4fa6d6183b08ca8dd9e03d9b240e78"
 path = "."
 extensions = [".xml", ".xsd", ".xsl", ".xslt", ".csproj", ".fsproj", ".vbproj", ".props", ".targets", ".slnx"]
+
+[[corpus]]
+language = "dockerfile"
+repo = "docker-library/postgres"
+commit = "dfc76bb299b057785026eb2eea39556b6fe52983"
+path = "."
+extensions = ["Dockerfile"]
