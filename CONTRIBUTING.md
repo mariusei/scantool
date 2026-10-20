@@ -517,6 +517,11 @@ Languages integrate with two-tier skip system:
 **Tier 1**: Directory/file patterns (fast, structural)
 - Handled by `skip_patterns.py`: COMMON_SKIP_DIRS, COMMON_SKIP_FILES
 - Filters .git/, node_modules/, .pyc before language sees them
+- A name in SOURCE_OR_OUTPUT_DIRS (bin/, build/, packages/, ...) is kept
+  when git tracks a file below it (`gitignore.tracked_directories`): build
+  output is not committed, while a monorepo's packages/ or a project's bin/
+  scripts are. Every directory walk passes the tracked flag to
+  `should_skip_directory`; do not prune by name on your own.
 
 **Tier 2**: Language-specific patterns (semantic)
 - Handled by `should_analyze()` in your language class
