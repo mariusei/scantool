@@ -1,0 +1,12 @@
+<9 public names, 9 via definition> package powershell @WORKTREE
+basic
+  ErrorActionPreference  = 'Stop'                                powershell/basic.ps1:15
+  StagingShare  = '\\staging\releases'                           powershell/basic.ps1:16
+  Retries  = 3                                                   powershell/basic.ps1:17
+  Channel                                                        powershell/basic.ps1:22
+  Package                                                        powershell/basic.ps1:24
+  Format-PackageName  ([string]$Name)                            powershell/basic.ps1:39
+  Copy-Package  ([Package]$Package, [int]$Attempts = $Retries)   powershell/basic.ps1:43
+  Select-Preview                                                 powershell/basic.ps1:69
+  Invoke-Publish                                                 powershell/basic.ps1:73
+[exit 0]

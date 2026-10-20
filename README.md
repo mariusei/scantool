@@ -317,6 +317,7 @@ scantool does not attempt it.
 | `.zig` | Zig | functions, structs, enums, unions, tests, constants |
 | `.swift` | Swift | classes, structs, enums, protocols, functions, extensions, constants |
 | `.sh`, `.bash` | Bash | functions, file-scope variables and exports, comment blocks, `source` and script-execution edges |
+| `.ps1`, `.psm1`, `.psd1` | PowerShell | functions and filters with their `param()` signatures, classes, enums, comment-based help, file-scope variables, manifest keys; dot-source, `Import-Module`, manifest and script-execution edges |
 | `.sql` | SQL | tables, views, functions, procedures, indexes, columns |
 | `.html` | HTML | document structure, elements, attributes |
 | `.css` | CSS | selectors, properties, media queries |

@@ -685,7 +685,10 @@ init logic is in the call graph and callers resolve), zig (`pub`/`export`/`exter
 are public/external; a non-pub declaration is file-private → flaggable), php
 (no-modifier defaults to public; public/protected are external/subclass API and
 magic `__*`/interface methods are runtime/contract → reachable; only a `private`
-member is class-local → flaggable). NOT opted in — **measured, not assumed**: ruby.
+member is class-local → flaggable), powershell (a function of a dot-sourced script
+or of a module without an export list is callable by whoever loads it → reachable;
+only a function a literal `Export-ModuleMember` list leaves out, and that its file
+names nowhere else (`${function:X}`, an alias), is flaggable). NOT opted in — **measured, not assumed**: ruby.
 Ruby has no module privacy (public is callable anywhere) and its only narrower scope
 (private) is breachable by `send`/`method_missing`/`define_method` with computed
 names that have NO static declaration to resolve against (unlike a Swift `:Protocol`

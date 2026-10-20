@@ -179,6 +179,31 @@ CASES: dict[str, Case] = {
             "./path": ("lib/g.sh", "./util.sh\n"),
         },
     ),
+    "powershell": Case(
+        target="lib/Util.ps1",
+        files={"lib/Util.ps1": "function Get-Util { 1 }\n"},
+        forms={
+            ". $PSScriptRoot\\path": ("lib/a.ps1", ". $PSScriptRoot\\Util.ps1\n"),
+            '. "$PSScriptRoot/../path"': ("scripts/b.ps1", '. "$PSScriptRoot/../lib/Util.ps1"\n'),
+            ". .\\path": ("c.ps1", ". .\\lib\\Util.ps1\n"),
+            "& ./path": ("d.ps1", "& ./lib/Util.ps1 -Verbose\n"),
+            ".\\path": ("lib/e.ps1", ".\\Util.ps1\n"),
+            "Import-Module (Join-Path $PSScriptRoot path)": (
+                "scripts/f.ps1",
+                "Import-Module (Join-Path $PSScriptRoot '..\\lib\\Util.ps1') -Force\n",
+            ),
+            "$here = Split-Path -Parent $MyInvocation...; . $here\\path": (
+                "scripts/g.ps1",
+                '$here = Split-Path -Parent $MyInvocation.MyCommand.Path\n. "$here\\..\\lib\\util.ps1"\n',
+            ),
+            ". $env:ROOT\\path": ("tools/h.ps1", ". $env:ROOT\\lib\\Util.ps1\n"),
+            "pwsh -File path": ("i.ps1", "pwsh -NoProfile -File lib/Util.ps1\n"),
+            "manifest ScriptsToProcess": (
+                "lib/Util.psd1",
+                "@{ ScriptsToProcess = @('Util.ps1') }\n",
+            ),
+        },
+    ),
     "c": Case(
         target="include/dir/util.h",
         files={"include/dir/util.h": "int f(void);\n"},

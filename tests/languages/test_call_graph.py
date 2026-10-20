@@ -36,6 +36,7 @@ _CONTRACT_CLEAN = [
     "java",
     "ipynb",
     "bash",
+    "powershell",
 ]
 
 

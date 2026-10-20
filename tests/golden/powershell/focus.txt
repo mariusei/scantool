@@ -1,0 +1,11 @@
+basic.ps1::Package.Name (25-25)
+edges: no blank line above, no blank line below, then Channel (26)
+next: sct history basic.ps1::Package.Name (the commits that changed it)
+basic.ps1 (1-81)
+- Package @24
+  - Name [string] @25
+     25 |     [string]$Name
+  - Channel [Channel] @26
+  - Package ([string]$name) @28
+  - Describe () @33
+[exit 0]

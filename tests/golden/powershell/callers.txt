@@ -1,0 +1,7 @@
+<2 call sites in 1 file, 1 definition, 1 file scanned> callers of Format-PackageName
+defined: basic.ps1::Format-PackageName (function) basic.ps1:39
+
+basic.ps1  (2 sites)
+  - Package.Describe basic.ps1:34   return Format-PackageName -Name $this.Name
+  - Invoke-Publish basic.ps1:76   Register-ArgumentCompleter -CommandName Copy-Package -ScriptBlock ${function:Format-PackageName}
+[exit 0]
