@@ -1,4 +1,4 @@
-<1 file seen, 12 structures shown>
+<1 file seen, 13 structures shown>
 basic.c (3-83)
 - #include directives @3
 - User @8 # User structure definition
@@ -27,9 +27,9 @@ basic.c (3-83)
        …
 - MAX_RETRIES = 3 @52 # Retry budget for connection attempts
 - Pool @55 # Connection pool, its address record nested in it
-   struct Pool {
-       struct Address {
-     …
+  - Address @56
+     struct Address {
+         …
 - retry_connect int (struct DatabaseConfig *config) @64 [static] # Retry the connection until it succeeds or the budget is spent (internal)
    static int retry_connect(struct DatabaseConfig *config) {
        for (int attempt = 0; attempt < MAX_RETRIES; attempt++) {

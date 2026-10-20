@@ -244,6 +244,21 @@ class CCppLanguage(BaseLanguage):
                     ):
                         added.modifiers.insert(0, access)
 
+        def traverse_type_definitions(node: Node, target: list) -> None:
+            # A class, struct or enum defined where a type is expected
+            # (`struct p {..} make_p()`, `struct {..} var;`) holds its own
+            # members; a type that only names one (`struct p *`) has no body.
+            def visit(type_node: Node) -> None:
+                if type_node.child_by_field_name("body"):
+                    traverse(type_node, target)
+                else:
+                    for child in type_node.named_children:
+                        visit(child)
+
+            type_node = node.child_by_field_name("type")
+            if type_node:
+                visit(type_node)
+
         def traverse(node: Node, parent_structures: list):
             # Handle parse errors
             if node.type == "ERROR":
@@ -255,6 +270,10 @@ class CCppLanguage(BaseLanguage):
                         end_line=node.end_point[0] + 1,
                     )
                     parent_structures.append(error_node)
+                # Error recovery keeps well-formed subtrees inside the ERROR
+                # node: a failed `#ifndef` include guard wraps a whole header.
+                for child in node.children:
+                    traverse(child, parent_structures)
                 return
 
             # Structs
@@ -301,12 +320,22 @@ class CCppLanguage(BaseLanguage):
 
             # Functions (both declarations and definitions)
             elif node.type == "function_definition":
+                traverse_type_definitions(node, parent_structures)
                 func_node = self._extract_function(node, source_code, root)
                 if func_node:
                     parent_structures.append(func_node)
+                else:
+                    # No function name: a macro before a block, e.g.
+                    # `FMT_BEGIN_NAMESPACE namespace detail { ... }`, misread as
+                    # a definition. Its block holds the real declarations.
+                    body = node.child_by_field_name("body")
+                    if body:
+                        for child in body.children:
+                            traverse(child, parent_structures)
 
             # A function prototype, or a file-scope constant
             elif node.type == "declaration":
+                traverse_type_definitions(node, parent_structures)
                 decl_node = self._extract_function_declaration(
                     node, source_code, root
                 ) or self._extract_constant(node, source_code)
@@ -321,6 +350,7 @@ class CCppLanguage(BaseLanguage):
 
             # Method definitions (inside classes)
             elif node.type == "field_declaration":
+                traverse_type_definitions(node, parent_structures)
                 method_node = self._extract_method(node, source_code)
                 if method_node:
                     parent_structures.append(method_node)
@@ -651,8 +681,13 @@ class CCppLanguage(BaseLanguage):
                 for subchild in reversed(child.children):
                     if subchild.type == "identifier":
                         return self._get_node_text(subchild, source_code)
-            elif child.type in ("pointer_declarator", "reference_declarator"):
-                # Recurse into pointer/reference declarators
+            elif child.type in (
+                "pointer_declarator",
+                "reference_declarator",
+                "function_declarator",
+            ):
+                # Recurse into pointer/reference declarators, and from one into
+                # the function it returns from (`T *f()`)
                 name = self._extract_function_name(child, source_code)
                 if name:
                     return name
@@ -660,11 +695,20 @@ class CCppLanguage(BaseLanguage):
         return None
 
     def _extract_function_signature(self, declarator: Node, source_code: bytes) -> str | None:
-        """Extract function signature (parameters)."""
+        """Extract function signature (parameters).
+
+        For a function returning `T *` or `T &` the parameters sit on the
+        function declarator inside the pointer or reference declarator; the
+        marker is kept in front of them, `*(int x)`.
+        """
         params_node = declarator.child_by_field_name("parameters")
         if params_node:
             params_text = self._get_node_text(params_node, source_code)
             return params_text
+        if declarator.type in ("pointer_declarator", "reference_declarator"):
+            params = self._extract_function_signature(declarator.named_children[-1], source_code)
+            if params:
+                return self._get_node_text(declarator.children[0], source_code) + params
         return None
 
     def _extract_return_type(self, node: Node, source_code: bytes) -> str | None:
