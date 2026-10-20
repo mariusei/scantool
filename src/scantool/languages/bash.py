@@ -23,8 +23,11 @@ EDGE MODEL:
     the `-F` handler of `complete`/`compgen`. A command named through a
     variable (`"$cmd"`, `eval`) is not visible.
   - Import: `source`/`.` (import_type "source") and running a project file
-    (import_type "exec": a command named by a path, or the script argument
-    of bash/sh/dash/ksh/zsh/exec). Both are file dependencies, the only
+    (import_type "exec": a command named by a path, the script argument
+    of bash/sh/dash/ksh/zsh/exec, or the script argument of another
+    language's interpreter when it carries that language's extension:
+    `python3 tools/gen.py`, not `python -m build`; the interpreters are the
+    handlers' SHEBANG_INTERPRETERS). Both are file dependencies, the only
     thing the import graph records, so running a script counts toward its
     importers like sourcing it does; the call graph cannot hold it, since
     its callees are definition names, not files.
@@ -61,7 +64,16 @@ import re
 from tree_sitter import Node, Parser
 from tree_sitter_language_pack import get_language as get_packed_grammar
 
-from .base import MAX_EXPR_LEN, BaseLanguage, CommentBlocks, parent_dir
+from . import get_registry
+from .base import (
+    MAX_EXPR_LEN,
+    ROOTED,
+    UNKNOWN_ROOT,
+    BaseLanguage,
+    CommentBlocks,
+    parent_dir,
+    resolve_path_spec,
+)
 from .models import (
     CallInfo,
     DefinitionInfo,
@@ -72,7 +84,7 @@ from .models import (
 
 # Bash's builtin commands (bash manual, "Shell Builtin Commands"): run by the
 # shell itself, never a function of the project unless the file redefines one.
-_BUILTINS = frozenset(
+SHELL_BUILTINS = frozenset(
     {
         ".",
         ":",
@@ -158,11 +170,6 @@ _CD_SCRIPT_DIR = re.compile(
 # A plain parameter expansion: `$X`, `${X}`, `${X?}`, `${X:-default}`
 _VARIABLE = re.compile(r"\$\{?(\w+)(?:[:?][^}]*)?\}?")
 _GLOB = re.compile(r"[*?\[]")
-
-# target_module markers: a path anchored at the scanned root (resolved from
-# the script's directory at extraction), and a path under an unknown root
-_ROOTED = "/"
-_UNKNOWN_ROOT = "$/"
 
 
 class BashLanguage(BaseLanguage):
@@ -307,7 +314,10 @@ class BashLanguage(BaseLanguage):
             node = stack.pop()
             stack.extend(node.children)
             name = node.child_by_field_name("name") if node.type == "command" else None
-            if name is not None and (name.text or b"").decode("utf-8", "replace") not in _BUILTINS:
+            if (
+                name is not None
+                and (name.text or b"").decode("utf-8", "replace") not in SHELL_BUILTINS
+            ):
                 row = node.start_point[0] - offset
                 if 0 <= row < n_lines:
                     rows.add(row)
@@ -366,7 +376,7 @@ class BashLanguage(BaseLanguage):
         name = self._command_word(command, source_bytes)
         if name is None:
             return [], []
-        names = [name] if name not in _BUILTINS or name in def_names else []
+        names = [name] if name not in SHELL_BUILTINS or name in def_names else []
         arguments = [
             self._unquoted(a, source_bytes) for a in command.children_by_field_name("argument")
         ]
@@ -400,7 +410,22 @@ class BashLanguage(BaseLanguage):
     def extract_imports(self, file_path: str, content: str) -> list[ImportInfo]:
         source_bytes = content.encode("utf-8")
         root = self.parser.parse(source_bytes).root_node
-        script_dirs = self._script_dir_variables(root, source_bytes)
+        return self.file_edges(
+            file_path, root, source_bytes, self._script_dir_variables(root, source_bytes)
+        )
+
+    def file_edges(
+        self,
+        file_path: str,
+        root: Node,
+        source_bytes: bytes,
+        script_dirs: dict[str, str],
+        first_line: int = 1,
+    ) -> list[ImportInfo]:
+        """The source and exec edges of the commands under `root`: a whole
+        script, or shell code another handler runs (a make recipe), whose
+        first row is on line `first_line` of `file_path`. `script_dirs` are
+        the variables holding the file's directory (_script_dir_variables)."""
         imports: list[ImportInfo] = []
         stack = [root]
         while stack:
@@ -418,7 +443,7 @@ class BashLanguage(BaseLanguage):
                     ImportInfo(
                         source_file=file_path,
                         target_module=module,
-                        line=node.start_point[0] + 1,
+                        line=first_line + node.start_point[0],
                         import_type=import_type,
                     )
                 )
@@ -426,8 +451,9 @@ class BashLanguage(BaseLanguage):
 
     def _file_operand(self, command: Node, source_bytes: bytes) -> tuple[str, Node] | None:
         """("source" | "exec", the word naming the file) when the command
-        reads or runs a file: `source f`, `. f`, `bash f`, `exec f`, or a
-        command named by a path (`./f`, `"$DIR/f"`)."""
+        reads or runs a file: `source f`, `. f`, `bash f`, `exec f`, a
+        script of another language its interpreter runs (`python3 gen.py`),
+        or a command named by a path (`./f`, `"$DIR/f"`)."""
         name_node = command.child_by_field_name("name")
         if name_node is None or name_node.named_child_count != 1:
             return None
@@ -435,12 +461,18 @@ class BashLanguage(BaseLanguage):
         arguments = command.children_by_field_name("argument")
         if name in _SOURCE_COMMANDS:
             return ("source", arguments[0]) if arguments else None
+        words = [self._get_node_text(a, source_bytes) for a in arguments]
+        operand = next((a for a, w in zip(arguments, words) if not w.startswith("-")), None)
         if name in _SCRIPT_RUNNERS:
-            words = [self._get_node_text(a, source_bytes) for a in arguments]
-            if "-c" in words:
-                return None
-            operand = next((a for a, w in zip(arguments, words) if not w.startswith("-")), None)
-            return ("exec", operand) if operand is not None else None
+            return ("exec", operand) if operand is not None and "-c" not in words else None
+        # Another interpreter takes code and modules through flags (`-c`,
+        # `-e`, `python -m build`), so its operand is a script only when it
+        # carries an extension of the language that interpreter runs
+        language = get_registry().get_class_for_interpreter(name)
+        if language is not None and operand is not None:
+            text = self._get_node_text(operand, source_bytes).lower()
+            if text.endswith(tuple(language.get_extensions())):
+                return "exec", operand
         if "/" in name:
             return "exec", name_node.named_children[0]
         return None
@@ -499,18 +531,18 @@ class BashLanguage(BaseLanguage):
     def _path_spec(
         self, node: Node, source_bytes: bytes, file_path: str, script_dirs: dict[str, str]
     ) -> str | None:
-        """The operand as a target_module resolve_import_to_file reads:
-        "/p" for a path p under the scanned root (anchored at the script's
-        directory), "$/p" for a path p under an unknown root directory, and
-        a literal relative path as written. None when the shell would have
-        to evaluate more than that."""
+        """The operand as a path spec (base.resolve_path_spec): "/p" for a
+        path p under the scanned root (anchored at the script's directory),
+        "$/p" for a path p under an unknown root directory, and a literal
+        relative path as written. None when the shell would have to evaluate
+        more than that."""
         pieces = self._pieces(node, source_bytes)
         anchored = self._anchor(pieces, script_dirs)
         if anchored is not None:
             path = posixpath.normpath(posixpath.join(parent_dir(file_path), "./" + anchored))
             if "$" in path or _GLOB.search(path) or path.startswith(".."):
                 return None
-            return _ROOTED + path
+            return ROOTED + path
         # Unknown variables as leading directories, then a literal tail
         unknown_root = False
         while len(pieces) > 1 and not pieces[0][0] and pieces[1][1].startswith("/"):
@@ -522,7 +554,7 @@ class BashLanguage(BaseLanguage):
         path = "".join(text for _, text in pieces)
         if not path or path.startswith(("/", "~")) or _GLOB.search(path):
             return None
-        return _UNKNOWN_ROOT + path if unknown_root else path
+        return UNKNOWN_ROOT + path if unknown_root else path
 
     def resolve_import_to_file(
         self,
@@ -531,22 +563,7 @@ class BashLanguage(BaseLanguage):
         all_files: list[str],
         definitions_map: dict[str, str],
     ) -> str | None:
-        """A target_module from _path_spec to a project file: a rooted path
-        exactly; a literal path from the script's directory, then from the
-        root; a path under an unknown root when exactly one file ends with
-        it."""
-        if module.startswith(_UNKNOWN_ROOT):
-            tail = posixpath.normpath(module[len(_UNKNOWN_ROOT) :])
-            matches = [f for f in all_files if f == tail or f.endswith("/" + tail)]
-            return matches[0] if len(matches) == 1 else None
-        if module.startswith(_ROOTED):
-            path = module[len(_ROOTED) :]
-            return path if path in all_files else None
-        for base in (parent_dir(source_file), "."):
-            candidate = posixpath.normpath(posixpath.join(base, module))
-            if candidate in all_files:
-                return candidate
-        return None
+        return resolve_path_spec(module, source_file, all_files)
 
     # ===========================================================================
     # Entry points

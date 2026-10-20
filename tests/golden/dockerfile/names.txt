@@ -1,0 +1,4 @@
+<1 file seen, 8 structures shown, 1 excluded (.git/)>
+basic.Dockerfile (2-2)
+- Build the server in one stage and ship it in a slim one. @2
+[exit 0]

@@ -1,0 +1,4 @@
+<1 file seen, 13 structures shown, 1 excluded (.git/)>
+basic.mk (1-2)
+- Build, test and release the sample project. 2 lines @1
+[exit 0]

@@ -1,0 +1,7 @@
+<2 call sites in 1 file, 1 definition, 1 file scanned> callers of builder
+defined: basic.Dockerfile::builder (function) basic.Dockerfile:7
+
+basic.Dockerfile  (2 sites)
+  - test basic.Dockerfile:16   FROM builder AS test
+  - debian basic.Dockerfile:21   COPY --from=builder /out/server /usr/local/bin/server
+[exit 0]

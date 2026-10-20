@@ -179,6 +179,35 @@ CASES: dict[str, Case] = {
             "./path": ("lib/g.sh", "./util.sh\n"),
         },
     ),
+    "make": Case(
+        target="mk/rules.mk",
+        files={"mk/rules.mk": "lint:\n\ttrue\n"},
+        forms={
+            "include path": ("Makefile", "include mk/rules.mk\n"),
+            "-include $(CURDIR)/path": ("mk/makefile", "-include $(CURDIR)/rules.mk\n"),
+            "include $(dir $(lastword $(MAKEFILE_LIST)))path": (
+                "sub/GNUmakefile",
+                "HERE := $(dir $(lastword $(MAKEFILE_LIST)))\ninclude $(HERE)../mk/rules.mk\n",
+            ),
+            "$(MAKE) -f path": ("tools.mk", "lint:\n\t$(MAKE) -f mk/rules.mk lint\n"),
+        },
+    ),
+    "dockerfile": Case(
+        target="scripts/entry.sh",
+        files={"scripts/entry.sh": 'exec "$@"\n'},
+        forms={
+            "COPY path": ("Dockerfile", "FROM a\nCOPY scripts/entry.sh /usr/local/bin/\n"),
+            "COPY glob": ("Dockerfile.dev", "FROM a\nCOPY scripts/*.sh /opt/\n"),
+            "RUN a path a directory copy put there": (
+                "app.Dockerfile",
+                "FROM a\nCOPY . /src\nRUN /src/scripts/entry.sh\n",
+            ),
+            "ENTRYPOINT on PATH": (
+                "images/Containerfile",
+                'FROM a\nCOPY scripts /usr/local/bin/\nENTRYPOINT ["entry.sh"]\n',
+            ),
+        },
+    ),
     "c": Case(
         target="include/dir/util.h",
         files={"include/dir/util.h": "int f(void);\n"},

@@ -39,6 +39,14 @@
     "files": 25,
     "files_import_linked": 0.0
   },
+  "dockerfile": {
+    "calls_per_file": 0.0,
+    "defs_called": 0.0,
+    "defs_per_file": 1.0,
+    "dropped_callers": 0,
+    "files": 24,
+    "files_import_linked": 1.0
+  },
   "go": {
     "calls_per_file": 122.4167,
     "defs_called": 0.4309,
@@ -54,6 +62,14 @@
     "dropped_callers": 0,
     "files": 86,
     "files_import_linked": 0.8953
+  },
+  "make": {
+    "calls_per_file": 1.1429,
+    "defs_called": 0.2727,
+    "defs_per_file": 3.1429,
+    "dropped_callers": 0,
+    "files": 7,
+    "files_import_linked": 0.8571
   },
   "php": {
     "calls_per_file": 6.5833,

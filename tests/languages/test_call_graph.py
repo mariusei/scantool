@@ -36,6 +36,8 @@ _CONTRACT_CLEAN = [
     "java",
     "ipynb",
     "bash",
+    "make",
+    "dockerfile",
 ]
 
 

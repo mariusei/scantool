@@ -1,0 +1,8 @@
+basic.mk::Build, test and release the sample project. (1-2)
+edges: no blank line above, 3 blank below, then ROOT_DIR (4)
+next: sct history 'basic.mk::Build, test and release the sample project.' (the commits that changed it)
+basic.mk (1-40)
+- Build, test and release the sample project. 2 lines @1
+   1 | # Build, test and release the sample project.
+   2 | # Run `make help` for the list of targets.
+[exit 0]
