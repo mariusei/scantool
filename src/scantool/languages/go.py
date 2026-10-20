@@ -9,6 +9,7 @@ Key optimizations:
 """
 
 import os
+import posixpath
 import re
 from pathlib import Path
 
@@ -51,6 +52,8 @@ class GoLanguage(BaseLanguage):
         super().__init__(**kwargs)
         self.parser = Parser()
         self.parser.language = Language(tree_sitter_go.language())
+        self._modules: dict[str, tuple[str, str] | None] = {}
+        self._packages: tuple[list[str], dict[str, list[str]]] | None = None
 
     # ===========================================================================
     # Metadata (REQUIRED)
@@ -506,66 +509,34 @@ class GoLanguage(BaseLanguage):
     # ===========================================================================
 
     def extract_imports(self, file_path: str, content: str) -> list[ImportInfo]:
-        """
-        Extract import statements from Go file.
-
-        Patterns supported:
-        - import "package"
-        - import alias "package" (alias may be `.` or `_`)
-        - import ( ... ) (grouped imports)
-        """
+        """One record per import spec of the file's import declarations:
+        `import "pkg"`, `import alias "pkg"` (alias may be `.` or `_`) and
+        grouped `import ( ... )`, each at its declaration's first line.
+        Read from the syntax tree, so an import block inside a string
+        literal (a test that writes a Go program) is not an import."""
+        source = content.encode("utf-8", errors="replace")
         imports = []
-
-        # Pattern 1: Single import
-        single_import_pattern = r'^\s*import\s+(?:(\w+|\.)\s+)?"([^"]+)"'
-        for match in re.finditer(single_import_pattern, content, re.MULTILINE):
-            alias = match.group(1)  # Optional alias
-            package = match.group(2)
-            line_num = content[: match.start()].count("\n") + 1
-
-            imports.append(
-                ImportInfo(
-                    source_file=file_path,
-                    target_module=package,
-                    line=line_num,
-                    import_type="import",
-                    imported_names=[alias] if alias else [],
-                )
-            )
-
-        # Pattern 2: Grouped imports
-        # import (
-        #     "fmt"
-        #     alias "package"
-        # )
-        grouped_pattern = r"import\s*\(\s*((?:[^)]+))\s*\)"
-        for match in re.finditer(grouped_pattern, content, re.DOTALL):
-            import_block = match.group(1)
-            block_start_line = content[: match.start()].count("\n") + 1
-
-            # Parse each line in the import block
-            for line in import_block.split("\n"):
-                line = line.strip()
-                if not line or line.startswith("//"):
+        for declaration in self.parser.parse(source).root_node.children:
+            if declaration.type != "import_declaration":
+                continue
+            specs = [c for c in declaration.named_children if c.type == "import_spec"]
+            for group in declaration.named_children:
+                if group.type == "import_spec_list":
+                    specs += [c for c in group.named_children if c.type == "import_spec"]
+            for spec in specs:
+                path = spec.child_by_field_name("path")
+                if path is None:
                     continue
-
-                # Match: alias "package" OR "package"
-                import_line_pattern = r'(?:(\w+|\.)\s+)?"([^"]+)"'
-                line_match = re.search(import_line_pattern, line)
-                if line_match:
-                    alias = line_match.group(1)
-                    package = line_match.group(2)
-
-                    imports.append(
-                        ImportInfo(
-                            source_file=file_path,
-                            target_module=package,
-                            line=block_start_line,
-                            import_type="import",
-                            imported_names=[alias] if alias else [],
-                        )
+                name = spec.child_by_field_name("name")
+                imports.append(
+                    ImportInfo(
+                        source_file=file_path,
+                        target_module=self._get_node_text(path, source).strip('"`'),
+                        line=declaration.start_point[0] + 1,
+                        import_type="import",
+                        imported_names=[self._get_node_text(name, source)] if name else [],
                     )
-
+                )
         return imports
 
     def find_entry_points(self, file_path: str, content: str) -> list[EntryPointInfo]:
@@ -840,54 +811,83 @@ class GoLanguage(BaseLanguage):
         all_files: list[str],
         definitions_map: dict[str, str],
     ) -> str | None:
-        """
-        Resolve Go import path to file path.
+        """The first file of the project package an import path names (see
+        resolve_import_targets for the whole package); None for the
+        standard library, a dependency or a package outside the scan."""
+        package = self._package_dir(module, source_file, all_files)
+        files = self._package_files(all_files).get(package, []) if package is not None else []
+        return files[0] if files else None
 
-        Go imports are package paths like:
-        - "fmt" (stdlib)
-        - "github.com/user/pkg" (external)
-        - "./internal/utils" (relative, rare)
+    def resolve_import_targets(
+        self, imp: ImportInfo, all_files: list[str], definitions_map: dict[str, str]
+    ) -> list[str]:
+        """A Go import binds a package: every non-test file in the package's
+        directory, so an import of the module's root package links the
+        files at the module root, which no directory suffix names."""
+        package = self._package_dir(imp.target_module, imp.source_file, all_files)
+        return self._package_files(all_files).get(package, []) if package is not None else []
 
-        For internal packages, we try to match against project files.
-        """
-        # Skip stdlib and common external packages
-        stdlib_prefixes = (
-            "fmt",
-            "os",
-            "io",
-            "net",
-            "http",
-            "time",
-            "sync",
-            "context",
-            "strings",
-            "bytes",
-            "encoding",
-            "crypto",
-            "runtime",
-            "reflect",
-            "database",
-            "log",
-            "testing",
-            "path",
-            "regexp",
-            "sort",
-        )
-        if module.split("/")[0] in stdlib_prefixes:
-            return None
+    def _package_dir(self, module: str, source_file: str, all_files: list[str]) -> str | None:
+        """The project directory (relative to the scanned root, "" for the
+        root itself) of the package an import path names.
 
-        # Try to match package path to local files
-        # github.com/user/project/pkg/foo -> pkg/foo/*.go
+        Under a go.mod the import path is the module path followed by the
+        package's directory below go.mod; a path outside the module is the
+        standard library or a dependency. Without a go.mod (GOPATH layout)
+        the longest trailing part of the path that names a project package
+        directory is taken, and a path whose first element has no dot is
+        the standard library's (the go command reserves those paths)."""
+        root = os.path.abspath(self.root or "")
+        found = self._go_module(os.path.dirname(os.path.join(root, source_file)))
+        if found is not None:
+            module_dir, module_path = found
+            if module != module_path and not module.startswith(module_path + "/"):
+                return None
+            package = os.path.join(module_dir, *module[len(module_path) :].split("/"))
+            relative = os.path.relpath(package, root).replace(os.sep, "/")
+            if relative == ".." or relative.startswith("../"):
+                return None  # a package of the module outside the scanned directory
+            return "" if relative == "." else relative
         parts = module.split("/")
-
-        # Try finding a matching directory
+        if "." not in parts[0]:
+            return None
+        packages = self._package_files(all_files)
         for i in range(len(parts)):
-            subpath = "/".join(parts[i:])
-            for f in all_files:
-                if f.startswith(subpath + "/") and f.endswith(".go"):
-                    return f
-
+            candidate = "/".join(parts[i:])
+            if candidate in packages:
+                return candidate
         return None
+
+    def _go_module(self, directory: str) -> tuple[str, str] | None:
+        """(absolute directory, module path) of the go.mod governing an
+        absolute directory: the nearest go.mod at or above it, looked up
+        past the scanned root as the go command does, read once per
+        analysis; None when no directory above has one."""
+        if directory not in self._modules:
+            go_mod = os.path.join(directory, "go.mod")
+            parent = os.path.dirname(directory)
+            if os.path.isfile(go_mod):
+                with open(go_mod, encoding="utf-8", errors="replace") as f:
+                    match = self._MODULE_DIRECTIVE.search(f.read())
+                self._modules[directory] = (directory, match.group(1)) if match else None
+            elif parent == directory:
+                self._modules[directory] = None
+            else:
+                self._modules[directory] = self._go_module(parent)
+        return self._modules[directory]
+
+    _MODULE_DIRECTIVE = re.compile(r'^module\s+"?([^"\s]+)"?', re.MULTILINE)
+
+    def _package_files(self, all_files: list[str]) -> dict[str, list[str]]:
+        """Project directory -> its non-test .go files, the files a package
+        import binds; built once per file list."""
+        if self._packages is None or self._packages[0] is not all_files:
+            packages: dict[str, list[str]] = {}
+            for path in all_files:
+                if path.endswith(".go") and not path.endswith(self._TEST_FILE_SUFFIX):
+                    packages.setdefault(posixpath.dirname(path), []).append(path)
+            self._packages = (all_files, packages)
+        return self._packages[1]
 
     def format_entry_point(self, ep: EntryPointInfo) -> str:
         """
