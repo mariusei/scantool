@@ -1,0 +1,29 @@
+<1 file seen, 10 structures shown>
+basic.sh (2-52)
+- Deploy the release artifacts to the staging host. 3 lines @2
+- SCRIPT_DIR = "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" @8
+- DEFAULT_HOST = "staging.example.com" @9 [readonly]
+- LOG_LEVEL = "${LOG_LEVEL:-info}" @10 [export]
+- shellcheck source=lib.sh @12
+- usage @16 # Print the usage text and exit with the given status.
+   usage() {
+     …
+- _upload @22 # Copy one artifact, retrying on failure.
+   _upload() {
+     local file="$1"
+     local attempt
+     for attempt in 1 2 3; do
+       if scp "$file" "$DEFAULT_HOST:/srv/releases/"; then
+         log_info "uploaded $file"
+         …
+       log_warn "attempt $attempt failed for $file"
+     …
+- deploy @35
+  - cleanup @37
+     cleanup() {
+       rm -rf "$workdir"
+       log_info "removed $workdir"
+- main @49
+   main() {
+     [[ $# -ge 1 ]] || usage 1
+     deploy "$1"

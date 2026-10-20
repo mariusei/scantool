@@ -35,6 +35,7 @@ _CONTRACT_CLEAN = [
     "ruby",
     "java",
     "ipynb",
+    "bash",
 ]
 
 

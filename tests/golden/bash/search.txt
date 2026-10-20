@@ -1,0 +1,11 @@
+<1 file seen, 10 structures shown, 1 excluded (.git/)>
+2 hits in 2 structures for /main/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers main (only the real call sites, not comments or strings)
+
+./basic.sh
+- main @49-52  (1 hit)
+   49 | main() {
+- (module level) @58-58  (1 hit)
+   58 | main "$@"
+[exit 0]

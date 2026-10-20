@@ -38,6 +38,7 @@ GOLDEN_DIR = TESTS_DIR / "golden"
 
 # One representative sample file per language.
 SAMPLES = {
+    "bash": "bash/samples/basic.sh",
     "c": "c_cpp/samples/basic.c",
     "cpp": "c_cpp/samples/basic.cpp",
     "csharp": "csharp/samples/Basic.cs",
