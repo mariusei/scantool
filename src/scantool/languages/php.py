@@ -8,8 +8,11 @@ Key optimizations:
 - Single tree-sitter parser instance shared across all operations
 """
 
+import json
+import os
 import posixpath
 import re
+from dataclasses import dataclass
 from pathlib import Path
 
 import tree_sitter_php
@@ -98,6 +101,7 @@ class PHPLanguage(BaseLanguage):
         super().__init__(**kwargs)
         self.parser = Parser()
         self.parser.language = Language(tree_sitter_php.language_php())
+        self._autoloads: dict[str, _Psr4 | None] = {}
 
     def _fragment_prefix(self) -> str:
         """Detached excerpts parse as HTML text without the PHP open tag."""
@@ -1127,10 +1131,16 @@ class PHPLanguage(BaseLanguage):
         - Foo\\Bar\\Baz -> Foo/Bar/Baz.php
 
         A require/include names a file path, which resolves as written.
-        Vendor namespaces are skipped.
+        A class name resolves first through the PSR-4 prefixes of the
+        nearest composer.json; without a mapping that names a project file,
+        the namespace is read as a path from the scanned root. Vendor
+        namespaces are skipped.
         """
         if module in all_files:
             return module
+        for candidate in self._psr4_candidates(module, source_file):
+            if candidate in all_files:
+                return candidate
 
         # Skip vendor packages (common third-party prefixes)
         vendor_prefixes = (
@@ -1162,6 +1172,44 @@ class PHPLanguage(BaseLanguage):
 
         return None
 
+    def _psr4_candidates(self, module: str, source_file: str) -> list[str]:
+        """The project paths a class name may live at under the PSR-4
+        autoload of the composer.json governing the importing file, in the
+        order Composer tries them: longest matching namespace prefix first,
+        each of its directories in order. Paths outside the scanned root
+        are left out."""
+        root = os.path.abspath(self.root or "")
+        autoload = self._psr4(os.path.dirname(os.path.join(root, source_file)))
+        if autoload is None:
+            return []
+        candidates = []
+        for prefix, directories in autoload.prefixes:
+            if not module.startswith(prefix):
+                continue
+            rest = module[len(prefix) :].split("\\")
+            for directory in directories:
+                path = os.path.join(autoload.directory, directory, *rest) + ".php"
+                relative = os.path.relpath(path, root).replace(os.sep, "/")
+                if not relative.startswith("../"):
+                    candidates.append(relative)
+        return candidates
+
+    def _psr4(self, directory: str) -> "_Psr4 | None":
+        """The PSR-4 autoload of the nearest composer.json at or above an
+        absolute directory, looked up past the scanned root as Composer
+        does, read once per analysis; None when no directory above has a
+        composer.json or the nearest one cannot be read."""
+        if directory not in self._autoloads:
+            composer = os.path.join(directory, "composer.json")
+            parent = os.path.dirname(directory)
+            if os.path.isfile(composer):
+                self._autoloads[directory] = _read_psr4(composer)
+            elif parent == directory:
+                self._autoloads[directory] = None
+            else:
+                self._autoloads[directory] = self._psr4(parent)
+        return self._autoloads[directory]
+
     def _resolve_php_relative_path(self, current_file: str, relative_path: str) -> str | None:
         """`./config.php`, `../utils.php` (Unix-style, unlike Python's dot
         imports) from the including file's directory as a project path;
@@ -1190,3 +1238,38 @@ class PHPLanguage(BaseLanguage):
             return f"  {ep.file}:routes @{ep.line}"
         else:
             return super().format_entry_point(ep)
+
+
+@dataclass
+class _Psr4:
+    """A composer.json's PSR-4 autoload: its directory, and (namespace
+    prefix, directories relative to it) pairs, longest prefix first."""
+
+    directory: str
+    prefixes: list[tuple[str, list[str]]]
+
+
+def _read_psr4(path: str) -> _Psr4 | None:
+    """The `autoload` and `autoload-dev` PSR-4 maps of a composer.json; a
+    directory may be one string or a list. None when the file is not a
+    readable JSON object."""
+    try:
+        with open(path, encoding="utf-8") as f:
+            config = json.load(f)
+    except (OSError, ValueError):
+        return None
+    if not isinstance(config, dict):
+        return None
+    prefixes: dict[str, list[str]] = {}
+    for section in ("autoload", "autoload-dev"):
+        autoload = config.get(section)
+        mapping = autoload.get("psr-4") if isinstance(autoload, dict) else None
+        if not isinstance(mapping, dict):
+            continue
+        for prefix, directories in mapping.items():
+            if isinstance(directories, str):
+                directories = [directories]
+            if isinstance(directories, list):
+                prefixes.setdefault(prefix, []).extend(d for d in directories if isinstance(d, str))
+    ordered = sorted(prefixes.items(), key=lambda item: -len(item[0]))
+    return _Psr4(os.path.dirname(path), ordered)
