@@ -183,6 +183,15 @@ COMMON_SKIP_DIRS = (
     | DATA_DIRS
 )
 
+# Names a toolchain writes its output to that projects also give to their own
+# source: scripts in bin/ (Rails, rbenv), the packages of a JavaScript
+# monorepo in packages/, build and release scripts in build/ and release/.
+# Build output is not committed, so a directory under one of these names is
+# skipped only when git tracks no file below it. The other names are skipped
+# even when tracked: vendor/ and node_modules/ hold other people's code, dist/
+# and coverage/ hold generated files even when a project commits them.
+SOURCE_OR_OUTPUT_DIRS = frozenset({"bin", "build", "out", "packages", "release", "target"})
+
 # Directory name suffixes that indicate directory-based binary formats.
 # These are pruned by should_skip_directory() regardless of the base name.
 DATA_FORMAT_DIR_SUFFIXES = {
@@ -260,16 +269,20 @@ COMMON_SKIP_EXTENSIONS = {
 # =============================================================================
 
 
-def should_skip_directory(dir_name: str) -> bool:
+def should_skip_directory(dir_name: str, tracked: bool = False) -> bool:
     """
     Check if directory should be skipped during discovery.
 
     Args:
         dir_name: Directory name (not full path)
+        tracked: git tracks a file below the directory (see
+            gitignore.tracked_directories); keeps a SOURCE_OR_OUTPUT_DIRS name
 
     Returns:
         True if directory should be skipped
     """
+    if tracked and dir_name in SOURCE_OR_OUTPUT_DIRS:
+        return False
     if dir_name in COMMON_SKIP_DIRS:
         return True
     # Skip directory-based binary formats regardless of base name

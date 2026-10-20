@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import parse_cache
-from .gitignore import GitignoreParser, load_gitignore
+from .gitignore import GitignoreParser, load_gitignore, tracked_directories
 from .glob_expander import expand_braces
 from .languages import StructureNode, get_registry
 from .languages.models import Sweep
@@ -47,9 +47,11 @@ def _estimate_tokens(lines: list[str]) -> int:
 SWEEP_MAX_BYTES = 100 * 1024 * 1024  # 100 MB; far above any hand/generated source file
 
 
-def _dir_excluded_by(name: str, rel: str, gitignore, exclude_parser: GitignoreParser) -> str | None:
+def _dir_excluded_by(
+    name: str, rel: str, gitignore, exclude_parser: GitignoreParser, tracked: frozenset[str]
+) -> str | None:
     """The label a pruned directory is counted under, or None to descend."""
-    if name.startswith(".") or should_skip_directory(name):
+    if name.startswith(".") or should_skip_directory(name, rel in tracked):
         return f"{name}/"
     if gitignore and (by := gitignore.decide(rel, True)):
         return by
@@ -502,28 +504,14 @@ class FileScanner:
             max_files=max_files,
         ).results
 
-    # Always excluded: OS litter and build/dependency directories that no
-    # scan of a project means to include.
+    # Always excluded: OS litter and egg-info metadata. Build and dependency
+    # directories are pruned by name in _dir_excluded_by (should_skip_directory).
     DEFAULT_EXCLUSIONS = (
         ".DS_Store",
         "Thumbs.db",
         "desktop.ini",
         ".localized",
-        "node_modules/",
-        "__pycache__/",
-        ".pytest_cache/",
-        "dist/",
-        "build/",
-        "target/",
         "*.egg-info/",
-        ".venv/",
-        "venv/",
-        ".next/",
-        ".nuxt/",
-        "coverage/",
-        ".coverage/",
-        ".ruff_cache/",
-        ".mypy_cache/",
     )
 
     def sweep(
@@ -566,6 +554,7 @@ class FileScanner:
                     f"({ignored_by}); the explicit path wins"
                 )
 
+        tracked = tracked_directories(dir_path)
         all_exclude_patterns = [*self.DEFAULT_EXCLUSIONS, *(exclude_patterns or [])]
         exclude_parser = GitignoreParser(all_exclude_patterns)
         expanded_patterns = expand_braces(pattern)
@@ -589,7 +578,7 @@ class FileScanner:
             pruned = []
             for d in sorted(dirs):
                 dir_rel = f"{rel_root_str}/{d}" if rel_root_str else d
-                excluded_by = _dir_excluded_by(d, dir_rel, gitignore, exclude_parser)
+                excluded_by = _dir_excluded_by(d, dir_rel, gitignore, exclude_parser, tracked)
                 if excluded_by:
                     sweep.excluded[excluded_by] += 1
                 else:
