@@ -745,6 +745,7 @@
       "CONDENSE_STRATEGY": "overridden",
       "FILENAMES": "inherited",
       "IMPORT_GROUP_LABEL": "inherited",
+      "MENTIONS_ARE_REFERENCES": "inherited",
       "NON_EXPORT_TYPES": "inherited",
       "QUALIFIER": "inherited",
       "REGEX_CALL_KEYWORDS": "inherited",
