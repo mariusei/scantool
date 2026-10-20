@@ -1,0 +1,8 @@
+<3 call sites in 1 file, 1 definition, 1 file scanned> callers of build
+defined: basic.mk::build (function) basic.mk:15
+
+basic.mk  (3 sites)
+  - all basic.mk:13   all: build test
+  - test basic.mk:18   test: build | $(OUT_DIR)
+  - release basic.mk:24   @$(MAKE) build GOFLAGS=-trimpath
+[exit 0]

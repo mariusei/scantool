@@ -1,0 +1,15 @@
+<12 public names, 12 via definition> package make @WORKTREE
+basic
+  ROOT_DIR  = $(dir $(lastword $(MAKEFILE_LIST)))   make/basic.mk:4
+  PYTHON  = python3                                 make/basic.mk:5
+  OUT_DIR  = $(CURDIR)/bin                          make/basic.mk:6
+  GOFLAGS  = -mod=mod                               make/basic.mk:7
+  all  : build test                                 make/basic.mk:13
+  build  : $(OUT_DIR)                               make/basic.mk:15
+  test  : build | $(OUT_DIR)                        make/basic.mk:18
+  release  : test                                   make/basic.mk:23
+  $(OUT_DIR)                                        make/basic.mk:27
+  HELP_TEXT  = Targets: all build test release      make/basic.mk:30
+  ci  : all                                         make/basic.mk:35
+  help                                              make/basic.mk:39
+[exit 0]

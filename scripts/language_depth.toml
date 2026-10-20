@@ -99,3 +99,10 @@ repo = "Bash-it/bash-it"
 commit = "ee8396b5a049ae648b9a75575507984d27a119bb"
 path = "."
 extensions = [".sh", ".bash"]
+
+[[corpus]]
+language = "make"
+repo = "kubernetes-sigs/kind"
+commit = "9de9541673737982391303f4102679be52e22430"
+path = "."
+extensions = ["Makefile", ".mk", "Makefile.common.in"]

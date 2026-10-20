@@ -1,0 +1,19 @@
+<1 file seen, 13 structures shown>
+basic.mk (1-40)
+- Build, test and release the sample project. 2 lines @1
+- ROOT_DIR = $(dir $(lastword $(MAKEFILE_LIST))) @4
+- PYTHON = python3 @5
+- OUT_DIR = $(CURDIR)/bin @6
+- GOFLAGS = -mod=mod @7 [export]
+- all : build test @13 [phony]
+- build : $(OUT_DIR) @15 [phony] # Compile the binaries
+- test : build | $(OUT_DIR) @18 [phony]
+   18 | test: build | $(OUT_DIR)
+   19 | 	bash scripts/test.sh
+   20 | 	$(PYTHON) tools/gen.py --check
+- release : test @23 [phony] # Tag the release and publish the artifacts.
+- $(OUT_DIR) @27
+- HELP_TEXT = Targets: all build test release @30 [define]
+- ci : all @35
+- help @39 [phony]
+[exit 0]

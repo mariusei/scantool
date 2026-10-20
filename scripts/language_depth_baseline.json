@@ -47,6 +47,14 @@
     "files": 86,
     "files_import_linked": 0.8953
   },
+  "make": {
+    "calls_per_file": 1.1429,
+    "defs_called": 0.2727,
+    "defs_per_file": 3.1429,
+    "dropped_callers": 0,
+    "files": 7,
+    "files_import_linked": 0.8571
+  },
   "php": {
     "calls_per_file": 6.5833,
     "defs_called": 0.557,

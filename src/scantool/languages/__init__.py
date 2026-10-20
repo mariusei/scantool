@@ -76,6 +76,7 @@ class LanguageRegistry:
     _instance: Optional["LanguageRegistry"] = None
     _languages: dict[str, type[BaseLanguage]]
     _interpreters: dict[str, type[BaseLanguage]]
+    _filenames: dict[str, type[BaseLanguage]]
     _instances: dict[str, BaseLanguage]
 
     def __new__(cls):
@@ -84,6 +85,7 @@ class LanguageRegistry:
             cls._instance = super().__new__(cls)
             cls._instance._languages = {}
             cls._instance._interpreters = {}
+            cls._instance._filenames = {}
             cls._instance._instances = {}
             cls._instance._discover_languages()
         return cls._instance
@@ -125,13 +127,16 @@ class LanguageRegistry:
             self._languages[ext_lower] = language_cls
         for interpreter in language_cls.SHEBANG_INTERPRETERS:
             self._interpreters[interpreter] = language_cls
+        for filename in language_cls.FILENAMES:
+            self._filenames[filename.lower()] = language_cls
 
     def get_class_for(
         self, path: str, head: str | bytes | None = None
     ) -> type[BaseLanguage] | None:
-        """The handler class for a file: by its extension; for a file
-        without one, by the interpreter its `#!` line names (scripts in bin/
-        and libexec/).
+        """The handler class for a file: by its extension; then by its name
+        up to the first dot (`Makefile`, `Dockerfile.dev`; see
+        BaseLanguage.FILENAMES); for a file without an extension, by the
+        interpreter its `#!` line names (scripts in bin/ and libexec/).
 
         Args:
             path: The file's path; only its name is used, and the file is
@@ -141,8 +146,11 @@ class LanguageRegistry:
         """
         name = os.path.basename(path)
         extension = os.path.splitext(name)[1].lower()
-        if extension:
-            return self._languages.get(extension)
+        if extension in self._languages:
+            return self._languages[extension]
+        by_name = self._filenames.get(name.split(".", 1)[0].lower())
+        if by_name is not None or extension:
+            return by_name
         if not self._interpreters:
             return None
         if head is None:
@@ -152,6 +160,12 @@ class LanguageRegistry:
             except OSError:
                 return None
         interpreter = shebang_interpreter(head)
+        return self._interpreters.get(interpreter) if interpreter else None
+
+    def get_class_for_interpreter(self, command: str) -> type[BaseLanguage] | None:
+        """The handler class for the scripts an interpreter command runs
+        (`python3`, `/usr/bin/ruby`), by SHEBANG_INTERPRETERS."""
+        interpreter = shebang_interpreter("#!" + command)
         return self._interpreters.get(interpreter) if interpreter else None
 
     def get_for(self, path: str, head: str | bytes | None = None) -> BaseLanguage | None:

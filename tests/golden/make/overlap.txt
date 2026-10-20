@@ -1,0 +1,12 @@
+<2 branches vs v1, 2 with structural changes; parts: branches 3, shared 4, colliding 2, order 1> base v1 (6b09e05)
+branches:
+a  merge-base 6b09e05  1 ahead 0 behind  1 file, +1 ~2 -0 structures
+b  merge-base 6b09e05  1 ahead 0 behind  1 file, +1 ~2 -0 structures
+shared: overlap (structures touched by 2+ branches): 3 in 1 file
+  basic.mk::PYTHON    a(~)  b(~)
+  basic.mk::lint      a(+)  b(+)
+  basic.mk::release   a(~)  b(~)
+colliding: colliding new names (added independently on 2+ branches): 1
+  lint   a:basic.mk:27  b:basic.mk:27
+order: merge order (a hint, not a verdict): a < b   (all share 3 structures; ordered by change size, a touches 3 and b touches 3)
+[exit 0]
