@@ -11,7 +11,7 @@ from typing import Any
 from . import call_graph
 from .consensus import DivergenceConfig, find_divergences, format_divergences
 from .delta import stat_fingerprint
-from .gitignore import load_gitignore
+from .gitignore import load_gitignore, tracked_directories
 from .languages import (
     BaseLanguage,
     CodeMapResult,
@@ -123,6 +123,7 @@ class CodeMap:
         self.gitignore = None
         if respect_gitignore:
             self.gitignore = load_gitignore(self.directory)
+        self.tracked = tracked_directories(self.directory)
 
         # Get analyzer registry
         self.registry = get_registry()
@@ -290,9 +291,9 @@ class CodeMap:
 
             kept_dirs = []
             for dir_name in dirs:
-                if should_skip_directory(dir_name):
-                    continue
                 rel_dir = dir_name if rel_root == "." else f"{rel_root}/{dir_name}"
+                if should_skip_directory(dir_name, rel_dir in self.tracked):
+                    continue
                 if self.gitignore and self.gitignore.matches(rel_dir, True):
                     continue
                 kept_dirs.append(dir_name)

@@ -6,7 +6,7 @@ import time
 from collections import defaultdict
 from pathlib import Path
 
-from .gitignore import load_gitignore
+from .gitignore import load_gitignore, tracked_directories
 from .languages.skip_patterns import should_skip_directory
 
 
@@ -94,6 +94,7 @@ class DirectoryPreview:
         self.gitignore = None
         if respect_gitignore:
             self.gitignore = load_gitignore(self.directory)
+        self.tracked = tracked_directories(self.directory)
 
     def scan(self) -> None:
         """Perform fast directory scan."""
@@ -140,7 +141,9 @@ class DirectoryPreview:
         # Process entries
         for entry in entries:
             # Check skip patterns first (fast O(1) lookup)
-            if entry.is_dir() and should_skip_directory(entry.name):
+            if entry.is_dir() and should_skip_directory(
+                entry.name, Path(entry.path).relative_to(self.directory).as_posix() in self.tracked
+            ):
                 self.ignored_dirs[entry.name] = self._quick_count_and_size(entry.path)
                 continue
 
