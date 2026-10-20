@@ -14,7 +14,7 @@ import textwrap
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, TypeVar
 
 from .. import parse_cache
 from .models import (
@@ -97,6 +97,23 @@ def parent_dir(path: str) -> str:
     Windows and would match nothing)."""
     head, _, _ = path.replace("\\", "/").rpartition("/")
     return head or "."
+
+
+def repository_top(path: str) -> str | None:
+    """The nearest directory at or above `path` holding `.git` (the directory
+    of a repository, or the file a submodule or linked worktree has): the top
+    of the repository containing it; None outside one."""
+    here = os.path.abspath(path)
+    while True:
+        if os.path.exists(os.path.join(here, ".git")):
+            return here
+        parent = os.path.dirname(here)
+        if parent == here:
+            return None
+        here = parent
+
+
+_Config = TypeVar("_Config")
 
 
 def render_flat_value(source_text: str, limit: int = MAX_EXPR_LEN) -> str:
@@ -279,6 +296,45 @@ class BaseLanguage(ABC):
         self.show_errors = show_errors
         self.fallback_on_errors = fallback_on_errors
         self.root = root
+        self._configs: dict[tuple[str, str], Any] = {}  # (file name, directory) -> parsed
+
+    def _nearest_config(
+        self, directory: str, name: str, read: Callable[[str], _Config | None]
+    ) -> _Config | None:
+        """The project config `name` (tsconfig.json, go.mod, composer.json)
+        nearest at or above a project directory ("" for the scanned root),
+        parsed by `read` from its absolute path, once per analysis.
+
+        The search stays inside the codebase: it may pass above the scanned
+        directory (`src/` scanned, the config beside it) but stops at the top
+        of the repository the file is in, or at the scanned directory outside
+        a repository, so the config of another project around this one never
+        applies. None outside an analysis (no root) or without such a file."""
+        if self.root is None:
+            return None
+        root = os.path.abspath(self.root)
+        here = os.path.normpath(os.path.join(root, directory))
+        key = (name, here)
+        if key not in self._configs:
+            parent = os.path.dirname(here)
+            if os.path.isfile(os.path.join(here, name)):
+                self._configs[key] = read(os.path.join(here, name))
+            elif (
+                os.path.exists(os.path.join(here, ".git"))
+                or (here == root and repository_top(root) is None)
+                or parent == here
+            ):
+                self._configs[key] = None
+            else:
+                self._configs[key] = self._nearest_config(os.path.relpath(parent, root), name, read)
+        return self._configs[key]
+
+    def _project_path(self, path: str) -> str:
+        """A path absolute or relative to the scanned root, as a "/"-joined
+        project path: "../src/x" under a scanned `src/` is "x". A path outside
+        the scanned root keeps its leading "../"."""
+        root = os.path.abspath(self.root or "")
+        return os.path.relpath(os.path.join(root, path), root).replace(os.sep, "/")
 
     # ===========================================================================
     # Metadata (REQUIRED - classmethod)

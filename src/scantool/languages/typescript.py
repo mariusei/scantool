@@ -130,7 +130,6 @@ class TypeScriptLanguage(BaseLanguage):
         # tree-sitter-typescript provides both typescript and tsx parsers
         # Use language_tsx for all TypeScript files as it's a superset that handles both
         self.parser.language = Language(tree_sitter_typescript.language_tsx())
-        self._tsconfigs: dict[str, _TsPaths | None] = {}  # by project directory
 
     # ===========================================================================
     # Metadata (REQUIRED)
@@ -1256,29 +1255,17 @@ class TypeScriptLanguage(BaseLanguage):
                 return f"{module}/index{ext}"
         return None
 
-    def _tsconfig(self, directory: str) -> _TsPaths | None:
-        """The nearest tsconfig.json at or above a project directory, read
-        once per analysis; None outside an analysis (no root) or when no
-        config above the directory declares compilerOptions."""
-        if self.root is None:
-            return None
-        if directory not in self._tsconfigs:
-            candidate = os.path.join(self.root, directory, "tsconfig.json")
-            if os.path.isfile(candidate):
-                self._tsconfigs[directory] = _read_tsconfig(candidate, directory)
-            elif directory in ("", "."):
-                self._tsconfigs[directory] = None
-            else:
-                self._tsconfigs[directory] = self._tsconfig(posixpath.dirname(directory))
-        return self._tsconfigs[directory]
-
     def _alias_candidates(self, source_file: str, specifier: str) -> list[str]:
         """The project paths a bare specifier may name under the importing
         file's tsconfig: the substitutions of the `paths` pattern with the
         longest matching prefix, in order; else the specifier under baseUrl
         when one is set; nothing without a config. Each as a project path
         without the source extension, like a resolved relative specifier."""
-        config = self._tsconfig(posixpath.dirname(source_file))
+        config = self._nearest_config(
+            posixpath.dirname(source_file),
+            "tsconfig.json",
+            lambda path: _read_tsconfig(path, self._project_path(os.path.dirname(path))),
+        )
         if config is None:
             return []
         best: tuple[int, str, str] | None = None  # prefix length, pattern, the `*` text
@@ -1306,7 +1293,7 @@ class TypeScriptLanguage(BaseLanguage):
             return []
         out = []
         for target in targets:
-            joined = posixpath.normpath(posixpath.join(config.base, target))
+            joined = self._project_path(posixpath.join(config.base, target))
             if joined in (".", "..") or joined.startswith("../"):
                 continue
             stem, ext = posixpath.splitext(joined)
