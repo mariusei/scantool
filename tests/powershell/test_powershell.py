@@ -268,3 +268,10 @@ def test_condensed_excerpt_keeps_commands_and_returns(ps):
     assert 'Write-Log "copied $($Package.Describe())"' in text
     assert "return" in text
     assert ".SYNOPSIS" not in text
+
+
+def test_an_extensionless_pwsh_script_is_powershell():
+    from scantool.languages import get_registry
+    from scantool.languages.powershell import PowerShellLanguage
+
+    assert get_registry().get_class_for("deploy", "#!/usr/bin/env pwsh\n") is PowerShellLanguage

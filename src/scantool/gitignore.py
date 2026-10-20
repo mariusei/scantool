@@ -18,6 +18,7 @@ so a walk pays for one match per directory and one per file.
 
 import os
 import re
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -230,3 +231,25 @@ def load_gitignore(directory: Path) -> GitignoreStack | None:
     if not layers:
         return None
     return GitignoreStack(list(reversed(layers)))
+
+
+def tracked_directories(directory: Path) -> frozenset[str]:
+    """The directories below `directory`, "/"-joined and relative to it, that
+    hold a file git tracks; empty outside a repository or without git. A walk
+    keeps a directory named like build output (bin/, build/, packages/) when
+    it is in here: a project commits its source, not its build output."""
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(directory), "ls-files", "-z"], capture_output=True, check=False
+        )
+    except OSError:
+        return frozenset()
+    if result.returncode != 0:
+        return frozenset()
+    directories: set[str] = set()
+    for path in result.stdout.decode("utf-8", "replace").split("\0"):
+        head = path.rpartition("/")[0]
+        while head and head not in directories:
+            directories.add(head)
+            head = head.rpartition("/")[0]
+    return frozenset(directories)

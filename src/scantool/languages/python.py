@@ -66,6 +66,8 @@ class PythonLanguage(BaseLanguage):
     - extract_calls(): Find function/method calls
     """
 
+    SHEBANG_INTERPRETERS = ("python", "pypy")
+
     ATTACHED_PREFIX_TYPES = ("decorator",)
     ATTACHED_PREFIX_SKIP = ("comment",)
 

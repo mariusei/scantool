@@ -119,6 +119,13 @@ bash, PowerShell, XML, Makefile, Dockerfile and many more. Add a separate
 `tree-sitter-*` package only when the pack lacks the grammar and the package
 publishes wheels for every platform and Python version in the CI matrix.
 
+A packed grammar is not reliable by default: measure the share of lines it
+puts inside ERROR nodes on the corpus before building on it. The make grammar
+misreads shell syntax inside `$(shell ...)`, so `make.py` parses a copy with
+those spans blanked to the same length (4.0 % → 0.5 % of lines in ERROR). The
+dockerfile grammar left 35 % of the lines of 58 real Dockerfiles in ERROR, so
+`dockerfile.py` reads the line-based format itself and overrides `scan()`.
+
 ## Adding a New Language
 
 Create a single file in `src/scantool/languages/` that inherits from `BaseLanguage`.
@@ -510,6 +517,11 @@ Languages integrate with two-tier skip system:
 **Tier 1**: Directory/file patterns (fast, structural)
 - Handled by `skip_patterns.py`: COMMON_SKIP_DIRS, COMMON_SKIP_FILES
 - Filters .git/, node_modules/, .pyc before language sees them
+- A name in SOURCE_OR_OUTPUT_DIRS (bin/, build/, packages/, ...) is kept
+  when git tracks a file below it (`gitignore.tracked_directories`): build
+  output is not committed, while a monorepo's packages/ or a project's bin/
+  scripts are. Every directory walk passes the tracked flag to
+  `should_skip_directory`; do not prune by name on your own.
 
 **Tier 2**: Language-specific patterns (semantic)
 - Handled by `should_analyze()` in your language class
@@ -540,6 +552,8 @@ def should_analyze(self, file_path: str) -> bool:
 |--------|---------|---------|
 | `get_extensions()` | File extensions to handle | **Required** |
 | `get_language_name()` | Human-readable name | **Required** |
+| `SHEBANG_INTERPRETERS` | Interpreters whose `#!` line marks an extension-less file as this language (`bin/`, `libexec/` scripts) | `()` |
+| `FILENAMES` | File names that mark a file as this language when no registered extension does; matched, ignoring case, against the name up to its first dot (`Makefile`, `Makefile.common`, `Dockerfile.dev`) | `()` |
 | `_extract_structure()` | Tree-sitter AST traversal | **Required** (or override `scan()`) |
 | `scan()` | Extract structure from bytes | Tree-sitter pipeline w/ regex fallback |
 | `extract_imports()` | Find import statements | **Required** |

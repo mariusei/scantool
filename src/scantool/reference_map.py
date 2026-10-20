@@ -25,10 +25,10 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from .gitignore import load_gitignore
+from .gitignore import load_gitignore, tracked_directories
+from .languages.skip_patterns import should_skip_directory
 from .scanner import FileScanner
 
-_VENDORED = {".venv", "node_modules", "site-packages", "__pycache__", ".git", "dist", "build"}
 _SIZE_CAP = 256 * 1024  # skip oversized data blobs — code references do not live there
 
 
@@ -38,14 +38,15 @@ def source_files(repo: Path, exts: tuple) -> list[Path]:
     data files skipped. os.walk with in-place dir pruning so a big .venv costs
     nothing to skip."""
     gi = load_gitignore(repo)
+    tracked = tracked_directories(repo)
     out: list[Path] = []
     for root, dirs, names in os.walk(repo):
-        rel_root = os.path.relpath(root, repo)
+        rel_root = os.path.relpath(root, repo).replace(os.sep, "/")
         kept = []
         for d in dirs:
-            if d in _VENDORED:
-                continue
             reld = d if rel_root == "." else f"{rel_root}/{d}"
+            if should_skip_directory(d, reld in tracked):
+                continue
             if gi and gi.matches(reld, True):
                 continue
             kept.append(d)

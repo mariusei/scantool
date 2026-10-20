@@ -9,6 +9,7 @@ a single file per language instead of separate scanner + analyzer files.
 """
 
 import os
+import posixpath
 import re
 import textwrap
 from abc import ABC, abstractmethod
@@ -97,6 +98,41 @@ def parent_dir(path: str) -> str:
     Windows and would match nothing)."""
     head, _, _ = path.replace("\\", "/").rpartition("/")
     return head or "."
+
+
+# Markers on a path spec (the target_module of an edge to a file named by a
+# path: a script a shell runs, a makefile included, a file a Dockerfile
+# copies): a path anchored at the scanned root, and a path under a root
+# directory the source names only through a variable
+ROOTED = "/"
+UNKNOWN_ROOT = "$/"
+
+
+def resolve_path_spec(
+    module: str, source_file: str, all_files: list[str], ignore_case: bool = False
+) -> str | None:
+    """A path spec ("/"-separated) as a project file: a rooted path ("/p")
+    exactly; a path under an unknown root ("$/p") when exactly one file ends
+    with it; a literal relative path from the source file's directory, then
+    from the root, the two working directories such a file runs in by
+    convention. `ignore_case` compares names as a case-insensitive file
+    system does (PowerShell on Windows)."""
+
+    def fold(path: str) -> str:
+        return path.lower() if ignore_case else path
+
+    files = {fold(f): f for f in all_files}
+    if module.startswith(UNKNOWN_ROOT):
+        tail = fold(posixpath.normpath(module[len(UNKNOWN_ROOT) :]))
+        matches = [f for key, f in files.items() if key == tail or key.endswith("/" + tail)]
+        return matches[0] if len(matches) == 1 else None
+    if module.startswith(ROOTED):
+        return files.get(fold(module[len(ROOTED) :]))
+    for base in (parent_dir(source_file), "."):
+        candidate = fold(posixpath.normpath(posixpath.join(base, module)))
+        if candidate in files:
+            return files[candidate]
+    return None
 
 
 def repository_top(path: str) -> str | None:
@@ -339,6 +375,18 @@ class BaseLanguage(ABC):
     # ===========================================================================
     # Metadata (REQUIRED - classmethod)
     # ===========================================================================
+
+    #: Interpreters that mark a file without an extension as this language
+    #: when its `#!` line names one, without path or version (`bash` for
+    #: `#!/usr/bin/env bash`, `python` for `#!/usr/bin/python3.12`).
+    SHEBANG_INTERPRETERS: tuple[str, ...] = ()
+
+    #: File names that mark a file as this language when no registered
+    #: extension does (`Makefile`, `Dockerfile`). Matched, ignoring case like
+    #: an extension, against the name up to its first dot, so a variant named
+    #: by a suffix (`Makefile.common`, `Dockerfile.dev`) is the same language;
+    #: an extension a handler registers decides first (`Makefile.toml` is TOML).
+    FILENAMES: tuple[str, ...] = ()
 
     @classmethod
     @abstractmethod

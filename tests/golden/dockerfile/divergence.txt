@@ -1,0 +1,3 @@
+━━━ PEER DIVERGENCE ━━━  (sites breaking a sibling pattern — review, not bugs)
+  none above the codebase's own noise floor
+[exit 0]

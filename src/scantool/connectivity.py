@@ -142,11 +142,10 @@ def _compute_dead(directory: str, result) -> "tuple[set, bool]":
     contents: dict = {}
 
     def analyzer_for(relfile: str):
-        ext = Path(relfile).suffix
-        if ext not in analyzers:
-            cls = registry.get_analyzer(ext)
-            analyzers[ext] = cls() if cls else None
-        return analyzers[ext]
+        cls = registry.get_class_for(str(repo / relfile))
+        if cls not in analyzers:
+            analyzers[cls] = cls() if cls else None
+        return analyzers[cls]
 
     def content_for(relfile: str) -> str:
         if relfile not in contents:

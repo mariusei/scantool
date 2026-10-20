@@ -1,0 +1,3 @@
+basic.Dockerfile::builder.CGO_ENABLED@v1 (11-11)
+basic.Dockerfile::builder.CGO_ENABLED@v2 (11-11)
+[exit 0]

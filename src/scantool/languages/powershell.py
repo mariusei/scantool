@@ -83,10 +83,13 @@ from tree_sitter_language_pack import get_language as get_packed_grammar
 
 from .base import (
     MAX_EXPR_LEN,
+    ROOTED,
+    UNKNOWN_ROOT,
     BaseLanguage,
     CommentBlocks,
     parent_dir,
     render_flat_value,
+    resolve_path_spec,
     section_gist,
 )
 from .models import (
@@ -148,16 +151,15 @@ _HELP_KEYWORD = re.compile(r"^\s*\.([A-Z]+)\b", re.I)
 # A plain variable on the left of `=`, optionally cast: `[int]$x`, `$script:x`
 _ASSIGNED = re.compile(r"(?:\[[^\]]+\]\s*)?\$\{?(?:(\w+):)?(\w+)\}?")
 
-# target_module markers: a path anchored at the scanned root (resolved from
-# the script's directory at extraction), a path under an unknown root, and
-# a module named without a path
-_ROOTED = "/"
-_UNKNOWN_ROOT = "$/"
+# target_module marker for a module named without a path (paths use the
+# shared ROOTED/UNKNOWN_ROOT markers of resolve_path_spec)
 _MODULE_NAME = "@"
 
 
 class PowerShellLanguage(BaseLanguage):
     """Unified language handler for PowerShell (.ps1, .psm1, .psd1)."""
+
+    SHEBANG_INTERPRETERS = ("pwsh",)
 
     # Imperative code: keep control flow, assignments and calls, fold the rest
     CONDENSE_STRATEGY = "skeleton"
@@ -828,7 +830,7 @@ class PowerShellLanguage(BaseLanguage):
                 if "/" not in path and posixpath.splitext(path)[1].lower() not in _MODULE_FILES:
                     module = _MODULE_NAME + path
                 else:
-                    module = _ROOTED + posixpath.normpath(
+                    module = ROOTED + posixpath.normpath(
                         posixpath.join(parent_dir(file_path), path)
                     )
                 imports.append(
@@ -1076,9 +1078,9 @@ class PowerShellLanguage(BaseLanguage):
         kind, path = located
         if kind == "anchored":
             path = posixpath.normpath(posixpath.join(parent_dir(file_path), "./" + path))
-            return None if path.startswith("..") else _ROOTED + path
+            return None if path.startswith("..") else ROOTED + path
         if kind == "unknown":
-            return _UNKNOWN_ROOT + path if path else None
+            return UNKNOWN_ROOT + path if path else None
         if not path or path.startswith(("/", "~")) or re.match(r"[A-Za-z]:", path):
             return None
         extension = posixpath.splitext(path)[1].lower()
@@ -1107,18 +1109,7 @@ class PowerShellLanguage(BaseLanguage):
                 if matches:
                     return matches[0] if len(matches) == 1 else None
             return None
-        if module.startswith(_UNKNOWN_ROOT):
-            tail = posixpath.normpath(module[len(_UNKNOWN_ROOT) :]).lower()
-            matches = [f for f in all_files if f.lower() == tail or f.lower().endswith("/" + tail)]
-            return matches[0] if len(matches) == 1 else None
-        folded = {f.lower(): f for f in all_files}
-        if module.startswith(_ROOTED):
-            return folded.get(module[len(_ROOTED) :].lower())
-        for base in (parent_dir(source_file), "."):
-            candidate = posixpath.normpath(posixpath.join(base, module))
-            if candidate.lower() in folded:
-                return folded[candidate.lower()]
-        return None
+        return resolve_path_spec(module, source_file, all_files, ignore_case=True)
 
     # ===========================================================================
     # Entry points, visibility and reachability

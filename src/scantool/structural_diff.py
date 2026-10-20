@@ -226,7 +226,7 @@ def _invert(row: tuple[str, str, str]) -> tuple[str, str, str]:
 
 def language_of(scanner: FileScanner, rel: str) -> BaseLanguage | None:
     """The handler that owns a file, for its naming conventions."""
-    return scanner.registry.get(Path(rel).suffix.lower())
+    return scanner.registry.get_for(rel)
 
 
 def _is_heading(node: StructureNode) -> bool:

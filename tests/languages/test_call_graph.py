@@ -37,6 +37,8 @@ _CONTRACT_CLEAN = [
     "ipynb",
     "bash",
     "powershell",
+    "make",
+    "dockerfile",
 ]
 
 

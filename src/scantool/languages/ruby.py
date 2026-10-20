@@ -35,6 +35,8 @@ class RubyLanguage(BaseLanguage):
     - extract_calls(): Find method calls (not fully implemented)
     """
 
+    SHEBANG_INTERPRETERS = ("ruby",)
+
     CONDENSE_STRATEGY = "skeleton"
 
     def __init__(self, **kwargs):

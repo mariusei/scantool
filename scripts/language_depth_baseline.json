@@ -8,18 +8,18 @@
     "files_import_linked": 0.0947
   },
   "c": {
-    "calls_per_file": 140.8864,
-    "defs_called": 0.7776,
-    "defs_per_file": 19.9091,
-    "dropped_callers": 600,
+    "calls_per_file": 146.6818,
+    "defs_called": 0.8015,
+    "defs_per_file": 22.7273,
+    "dropped_callers": 0,
     "files": 44,
     "files_import_linked": 0.9773
   },
   "cpp": {
-    "calls_per_file": 229.0822,
-    "defs_called": 0.683,
-    "defs_per_file": 49.3836,
-    "dropped_callers": 1603,
+    "calls_per_file": 233.7123,
+    "defs_called": 0.6934,
+    "defs_per_file": 74.7397,
+    "dropped_callers": 0,
     "files": 73,
     "files_import_linked": 0.9452
   },
@@ -31,13 +31,21 @@
     "files": 241,
     "files_import_linked": 0.8008
   },
+  "dockerfile": {
+    "calls_per_file": 0.0,
+    "defs_called": 0.0,
+    "defs_per_file": 1.0,
+    "dropped_callers": 0,
+    "files": 24,
+    "files_import_linked": 1.0
+  },
   "go": {
     "calls_per_file": 122.4167,
     "defs_called": 0.4309,
     "defs_per_file": 17.0,
     "dropped_callers": 0,
     "files": 36,
-    "files_import_linked": 0.0
+    "files_import_linked": 0.6944
   },
   "java": {
     "calls_per_file": 29.7674,
@@ -47,13 +55,21 @@
     "files": 86,
     "files_import_linked": 0.8953
   },
+  "make": {
+    "calls_per_file": 1.1429,
+    "defs_called": 0.2727,
+    "defs_per_file": 3.1429,
+    "dropped_callers": 0,
+    "files": 7,
+    "files_import_linked": 0.8571
+  },
   "php": {
     "calls_per_file": 6.5833,
     "defs_called": 0.557,
     "defs_per_file": 5.2361,
     "dropped_callers": 0,
     "files": 72,
-    "files_import_linked": 0.0
+    "files_import_linked": 0.7639
   },
   "powershell": {
     "calls_per_file": 69.4963,
@@ -81,9 +97,9 @@
   },
   "rust": {
     "calls_per_file": 140.0421,
-    "defs_called": 0.6721,
+    "defs_called": 0.6724,
     "defs_per_file": 39.1789,
-    "dropped_callers": 73,
+    "dropped_callers": 0,
     "files": 95,
     "files_import_linked": 0.9053
   },

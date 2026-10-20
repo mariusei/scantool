@@ -28,6 +28,7 @@ Models are available from the models submodule:
 """
 
 import importlib
+import os
 import pkgutil
 from typing import Optional
 
@@ -49,7 +50,9 @@ __all__ = [
     "BaseLanguage",
     "LanguageRegistry",
     "get_language",
+    "get_language_for",
     "get_registry",
+    "shebang_interpreter",
     # Models
     "StructureNode",
     "is_file_info_stub",
@@ -72,6 +75,8 @@ class LanguageRegistry:
 
     _instance: Optional["LanguageRegistry"] = None
     _languages: dict[str, type[BaseLanguage]]
+    _interpreters: dict[str, type[BaseLanguage]]
+    _filenames: dict[str, type[BaseLanguage]]
     _instances: dict[str, BaseLanguage]
 
     def __new__(cls):
@@ -79,6 +84,8 @@ class LanguageRegistry:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._languages = {}
+            cls._instance._interpreters = {}
+            cls._instance._filenames = {}
             cls._instance._instances = {}
             cls._instance._discover_languages()
         return cls._instance
@@ -118,6 +125,58 @@ class LanguageRegistry:
                 if language_cls.get_priority() <= existing.get_priority():
                     continue
             self._languages[ext_lower] = language_cls
+        for interpreter in language_cls.SHEBANG_INTERPRETERS:
+            self._interpreters[interpreter] = language_cls
+        for filename in language_cls.FILENAMES:
+            self._filenames[filename.lower()] = language_cls
+
+    def get_class_for(
+        self, path: str, head: str | bytes | None = None
+    ) -> type[BaseLanguage] | None:
+        """The handler class for a file: by its extension; then by its name
+        up to the first dot (`Makefile`, `Dockerfile.dev`; see
+        BaseLanguage.FILENAMES); for a file without an extension, by the
+        interpreter its `#!` line names (scripts in bin/ and libexec/).
+
+        Args:
+            path: The file's path; only its name is used, and the file is
+                read for its first line when `head` is not given
+            head: The start of the file's content, when the caller has it
+                (a file read from a git ref, or content passed in)
+        """
+        name = os.path.basename(path)
+        extension = os.path.splitext(name)[1].lower()
+        if extension in self._languages:
+            return self._languages[extension]
+        by_name = self._filenames.get(name.split(".", 1)[0].lower())
+        if by_name is not None or extension:
+            return by_name
+        if not self._interpreters:
+            return None
+        if head is None:
+            try:
+                with open(path, "rb") as f:
+                    head = f.read(_SHEBANG_READ)
+            except OSError:
+                return None
+        interpreter = shebang_interpreter(head)
+        return self._interpreters.get(interpreter) if interpreter else None
+
+    def get_class_for_interpreter(self, command: str) -> type[BaseLanguage] | None:
+        """The handler class for the scripts an interpreter command runs
+        (`python3`, `/usr/bin/ruby`), by SHEBANG_INTERPRETERS."""
+        interpreter = shebang_interpreter("#!" + command)
+        return self._interpreters.get(interpreter) if interpreter else None
+
+    def get_for(self, path: str, head: str | bytes | None = None) -> BaseLanguage | None:
+        """The handler instance for a file (see get_class_for)."""
+        language_cls = self.get_class_for(path, head)
+        if language_cls is None:
+            return None
+        key = language_cls.__qualname__
+        if key not in self._instances:
+            self._instances[key] = language_cls()
+        return self._instances[key]
 
     def get(self, extension: str) -> BaseLanguage | None:
         """Get language handler instance for extension.
@@ -191,6 +250,32 @@ def get_registry() -> LanguageRegistry:
     if _registry is None:
         _registry = LanguageRegistry()
     return _registry
+
+
+def get_language_for(path: str, head: str | bytes | None = None) -> BaseLanguage | None:
+    """Language handler instance for a file, by extension or `#!` line
+    (see LanguageRegistry.get_class_for)."""
+    return get_registry().get_for(path, head)
+
+
+# Enough of a file for any `#!` line; the kernel itself reads at most 256 bytes.
+_SHEBANG_READ = 256
+
+
+def shebang_interpreter(head: str | bytes) -> str | None:
+    """The interpreter a `#!` line names, without path or version, or None:
+    `#!/bin/bash -e` is bash, `#!/usr/bin/env python3.12` is python,
+    `#!/usr/bin/env -S node --flag` is node."""
+    if isinstance(head, bytes):
+        head = head[:_SHEBANG_READ].decode("utf-8", "replace")
+    if not head.startswith("#!"):
+        return None
+    words = head[2:].split("\n", 1)[0].split()
+    if words and os.path.basename(words[0]) == "env":
+        words = [w for w in words[1:] if not w.startswith("-") and "=" not in w]
+    if not words:
+        return None
+    return os.path.basename(words[0]).rstrip("0123456789.") or None
 
 
 def get_language(extension: str) -> BaseLanguage | None:

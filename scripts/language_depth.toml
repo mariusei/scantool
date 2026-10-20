@@ -106,3 +106,17 @@ repo = "pester/Pester"
 commit = "98e56d65da1642a7158992b50ded240c42a3ac18"
 path = "."
 extensions = [".ps1", ".psm1", ".psd1"]
+
+[[corpus]]
+language = "make"
+repo = "kubernetes-sigs/kind"
+commit = "9de9541673737982391303f4102679be52e22430"
+path = "."
+extensions = ["Makefile", ".mk", "Makefile.common.in"]
+
+[[corpus]]
+language = "dockerfile"
+repo = "docker-library/postgres"
+commit = "dfc76bb299b057785026eb2eea39556b6fe52983"
+path = "."
+extensions = ["Dockerfile"]
