@@ -502,3 +502,52 @@ def test_surface_lists_a_file_scope_constant(tmp_path):
     exports = {e.name: e for e in read_surface(str(tmp_path)).exports}
     assert set(exports) == {"DEFAULT_ATTEMPTS", "run"}
     assert exports["DEFAULT_ATTEMPTS"].line == 2
+
+
+# ── import resolution: PSR-4 autoload from composer.json ────────────────────
+
+PSR4_TREE = {
+    "composer.json": (
+        '{"autoload": {"psr-4": {"Acme\\\\": "src/"}},'
+        ' "autoload-dev": {"psr-4": {"Acme\\\\Tests\\\\": ["tests/"]}}}'
+    ),
+    "src/App.php": "<?php\nnamespace Acme;\n\nuse Acme\\Routing\\Route;\n\nclass App {}\n",
+    "src/Routing/Route.php": "<?php\nnamespace Acme\\Routing;\n\nclass Route {}\n",
+    "tests/TestCase.php": "<?php\nnamespace Acme\\Tests;\n\nclass TestCase {}\n",
+    "tests/RouteTest.php": (
+        "<?php\nnamespace Acme\\Tests;\n\nuse Acme\\Routing\\Route;\n"
+        "use Acme\\Tests\\TestCase;\n\nclass RouteTest extends TestCase {}\n"
+    ),
+}
+
+
+def _psr4_imports(root: Path) -> dict[str, list[str]]:
+    from scantool.code_map import CodeMap
+
+    result = CodeMap(str(root), use_cache=False).analyze()
+    return {f.path: sorted(f.imports) for f in result.files}
+
+
+def _write_tree(root: Path) -> None:
+    for path, content in PSR4_TREE.items():
+        (root / path).parent.mkdir(parents=True, exist_ok=True)
+        (root / path).write_text(content)
+
+
+def test_psr4_prefix_maps_a_namespace_to_its_directory(tmp_path):
+    """`Acme\\` is autoloaded from src/ and `Acme\\Tests\\` from tests/: the
+    namespace is not the path, and the longest prefix decides."""
+    _write_tree(tmp_path)
+    imports = _psr4_imports(tmp_path)
+
+    assert imports["src/App.php"] == ["src/Routing/Route.php"]
+    assert imports["tests/RouteTest.php"] == ["src/Routing/Route.php", "tests/TestCase.php"]
+
+
+def test_psr4_applies_when_composer_json_is_above_the_scanned_directory(tmp_path):
+    """Scanning the autoloaded directory itself: composer.json is looked up
+    above the scanned root, as Composer does."""
+    _write_tree(tmp_path)
+    imports = _psr4_imports(tmp_path / "src")
+
+    assert imports["App.php"] == ["Routing/Route.php"]
