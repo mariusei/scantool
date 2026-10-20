@@ -468,3 +468,30 @@ def test_surface_lists_a_public_constant_and_not_a_static_one(tmp_path):
         ("LIMIT", "variable"),
         ("utils.STEP", "variable"),
     ]
+
+
+def test_local_class_method_calls_attribute_to_enclosing_function():
+    """A class declared inside a function body is not extracted, so calls in
+    its methods belong to the enclosing function.
+
+    Regression: Node addons declare `struct Worker : Napi::AsyncWorker` inside
+    the function that queues it. Attributing calls to `Execute`/`OnOK` (not
+    definitions, so not graph nodes) dropped those edges from the call graph.
+    """
+    src = (
+        "void helper() {}\n"
+        "void run() {\n"
+        "    struct Worker {\n"
+        "        void Execute() { helper(); }\n"
+        "    };\n"
+        "    Worker w;\n"
+        "    w.Execute();\n"
+        "}\n"
+    )
+    lang = get_language(".cpp")
+    defs = lang.extract_definitions("w.cpp", src)
+    calls = lang.extract_calls("w.cpp", src, defs)
+
+    helper_calls = [c for c in calls if c.callee_name == "helper"]
+    assert helper_calls, "helper() call was not captured at all"
+    assert all(c.caller_name == "run" for c in helper_calls), [c.caller_name for c in helper_calls]
