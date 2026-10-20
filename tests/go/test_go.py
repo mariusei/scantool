@@ -349,3 +349,87 @@ def test_surface_lists_an_exported_constant_not_an_unexported_one(tmp_path):
     )
     rows = [(e.name, e.kind, e.signature) for e in read_surface(str(tmp_path)).exports]
     assert rows == [("MaxRetries", "variable", "= 3"), ("New", "function", "()")]
+
+
+# ── import resolution: a Go import binds a package directory ────────────────
+
+
+def _import_graph(root: Path) -> dict[str, tuple[list[str], list[str]]]:
+    from scantool.code_map import CodeMap
+
+    result = CodeMap(str(root), use_cache=False).analyze()
+    return {f.path: (sorted(f.imports), sorted(f.imported_by)) for f in result.files}
+
+
+def _write(root: Path, files: dict[str, str]) -> None:
+    for path, content in files.items():
+        (root / path).parent.mkdir(parents=True, exist_ok=True)
+        (root / path).write_text(content)
+
+
+MODULE_TREE = {
+    "go.mod": "module example.com/tool\n\ngo 1.22\n",
+    "command.go": "package tool\n\nfunc Run() {}\n",
+    "args.go": "package tool\n\nfunc Args() {}\n",
+    "command_test.go": 'package tool\n\nimport "testing"\n\nfunc TestRun(t *testing.T) {}\n',
+    "doc/doc.go": (
+        'package doc\n\nimport (\n\t"fmt"\n\n\t"example.com/tool"\n'
+        '\t"example.com/other/util"\n)\n\nfunc Gen() { tool.Run(); fmt.Println() }\n'
+    ),
+    "util/util.go": "package util\n\nfunc U() {}\n",
+}
+
+
+def test_import_of_the_module_root_package_binds_its_non_test_files(tmp_path):
+    """The module's root package has no directory suffix to match: only
+    go.mod's module path names it. The import binds every file of the
+    package, not one, and not the package's tests."""
+    _write(tmp_path, MODULE_TREE)
+    graph = _import_graph(tmp_path)
+
+    assert graph["doc/doc.go"][0] == ["args.go", "command.go"]
+    assert graph["command_test.go"] == ([], [])
+
+
+def test_import_outside_the_module_is_not_a_project_package(tmp_path):
+    """`example.com/other/util` ends in `util`, the name of a project
+    directory, but lies outside go.mod's module: it is a dependency."""
+    _write(tmp_path, MODULE_TREE)
+    graph = _import_graph(tmp_path)
+
+    assert graph["util/util.go"][1] == []
+
+
+def test_go_mod_above_the_scanned_directory_still_names_the_packages(tmp_path):
+    """Scanning a subdirectory of a module: go.mod is looked up above the
+    scanned root, as the go command does."""
+    _write(
+        tmp_path,
+        {
+            "go.mod": "module example.com/tool\n",
+            "internal/a/a.go": "package a\n\nfunc A() {}\n",
+            "internal/b/b.go": (
+                'package b\n\nimport "example.com/tool/internal/a"\n\nfunc B() { a.A() }\n'
+            ),
+        },
+    )
+    graph = _import_graph(tmp_path / "internal")
+
+    assert graph["b/b.go"][0] == ["a/a.go"]
+
+
+def test_import_block_inside_a_string_literal_is_not_an_import():
+    """A test that writes a Go program holds an import block in a raw
+    string; only the file's own import declarations are imports."""
+    from scantool.languages.go import GoLanguage
+
+    content = (
+        'package tool\n\nimport (\n\t"os"\n\tu "example.com/x/util"\n)\n\n'
+        'var program = `package main\n\nimport (\n\t"example.com/tool"\n)\n`\n'
+    )
+    imports = GoLanguage().extract_imports("gen_test.go", content)
+
+    assert [(i.target_module, i.imported_names, i.line) for i in imports] == [
+        ("os", [], 3),
+        ("example.com/x/util", ["u"], 3),
+    ]

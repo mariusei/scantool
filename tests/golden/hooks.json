@@ -260,7 +260,7 @@
       "is_private": "overridden",
       "is_private_name": "inherited",
       "public_surface": "overridden",
-      "resolve_import_targets": "inherited",
+      "resolve_import_targets": "overridden",
       "resolve_import_to_file": "overridden",
       "scan": "inherited",
       "should_analyze": "overridden",
