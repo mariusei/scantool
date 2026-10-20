@@ -53,6 +53,7 @@ SAMPLES = {
     "make": "make/samples/basic.mk",
     "markdown": "markdown/samples/basic.md",
     "php": "php/samples/basic.php",
+    "powershell": "powershell/samples/basic.ps1",
     "python": "python/samples/basic.py",
     "ruby": "ruby/samples/basic.rb",
     "rust": "rust/samples/basic.rs",

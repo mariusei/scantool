@@ -1,0 +1,32 @@
+<1 file seen, 15 structures shown>
+basic.ps1 (1-77)
+- Publish the release packages to the staging share. 7 lines @1
+- ErrorActionPreference = 'Stop' @15
+- StagingShare = '\\staging\releases' @16 [script]
+- Retries = 3 @17
+- Channel @22
+- Package @24
+  - Name [string] @25
+  - Channel [Channel] @26
+  - Package ([string]$name) @28
+     Package([string]$name) {
+         $this.Name = $name
+         $this.Channel = [Channel]::Stable
+  - Describe () @33
+     …
+         return Format-PackageName -Name $this.Name
+- Format-PackageName ([string]$Name) @39 # Format a package name for the log.
+   function Format-PackageName([string]$Name) {
+       …
+- Copy-Package ([Package]$Package, [int]$Attempts = $Retries) @43 # Copy one package, retrying on failure.
+  - Test-Share @50
+     function Test-Share {
+         Test-Path -Path $script:StagingShare
+- Select-Preview @69 [filter]
+   filter Select-Preview {
+       if ($_.Channel -eq [Channel]::Preview) { $_ }
+- Invoke-Publish @73
+   function Invoke-Publish {
+       $packages = Get-Tool -Pattern '*.nupkg' | ForEach-Object { [Package]::new($_) }
+       $packages | Select-Preview | ForEach-Object { Copy-Package -Package $_ }
+       Register-ArgumentCompleter -CommandName Copy-Package -ScriptBlock ${function:Format-PackageName}

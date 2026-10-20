@@ -317,6 +317,7 @@ scantool does not attempt it.
 | `.zig` | Zig | functions, structs, enums, unions, tests, constants |
 | `.swift` | Swift | classes, structs, enums, protocols, functions, extensions, constants |
 | `.sh`, `.bash` | Bash | functions, file-scope variables and exports, comment blocks, `source` and script-execution edges |
+| `.ps1`, `.psm1`, `.psd1` | PowerShell | functions and filters with their `param()` signatures, classes, enums, comment-based help, file-scope variables, manifest keys; dot-source, `Import-Module`, manifest and script-execution edges |
 | `Makefile`, `GNUmakefile`, `Makefile.*`, `.mk` | Make | targets with prerequisites, variables, `define` blocks; `include`, recursive-make and script-execution edges, prerequisite calls, default goal |
 | `Dockerfile`, `Containerfile`, `Dockerfile.*`, `.dockerfile` | Dockerfile | build stages, ARG and ENV values; edges to the project files COPY/ADD take and to the copied scripts RUN, ENTRYPOINT and CMD run, stage-to-stage calls, entry point |
 | `.sql` | SQL | tables, views, functions, procedures, indexes, columns |
