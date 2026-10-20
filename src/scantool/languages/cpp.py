@@ -988,6 +988,7 @@ class CCppLanguage(BaseLanguage):
     ) -> list[CallInfo]:
         """Extract calls using tree-sitter AST with caller context tracking."""
         calls = []
+        def_names = {d.name for d in definitions}
 
         def traverse(node: Node, current_func: str | None = None):
             # Track function context
@@ -998,9 +999,11 @@ class CCppLanguage(BaseLanguage):
                     self._extract_function_name(declarator, source_bytes) if declarator else None
                 )
                 if func_name:
-                    # Traverse children with this function as context
+                    # A method of a class declared inside a function body is not
+                    # an extracted definition: its calls belong to the enclosing one.
+                    caller = func_name if func_name in def_names else current_func
                     for child in node.children:
-                        traverse(child, func_name)
+                        traverse(child, caller)
                     return
 
             # Extract call expressions
