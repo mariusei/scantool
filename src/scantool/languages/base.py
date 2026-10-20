@@ -340,6 +340,11 @@ class BaseLanguage(ABC):
     # Metadata (REQUIRED - classmethod)
     # ===========================================================================
 
+    #: Interpreters that mark a file without an extension as this language
+    #: when its `#!` line names one, without path or version (`bash` for
+    #: `#!/usr/bin/env bash`, `python` for `#!/usr/bin/python3.12`).
+    SHEBANG_INTERPRETERS: tuple[str, ...] = ()
+
     @classmethod
     @abstractmethod
     def get_extensions(cls) -> list[str]:

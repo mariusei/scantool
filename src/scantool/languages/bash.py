@@ -168,6 +168,8 @@ _UNKNOWN_ROOT = "$/"
 class BashLanguage(BaseLanguage):
     """Unified language handler for shell scripts (.sh, .bash)."""
 
+    SHEBANG_INTERPRETERS = ("bash", "sh", "dash", "ksh")
+
     # Imperative code: keep control flow, assignments and calls, fold the rest
     CONDENSE_STRATEGY = "skeleton"
 

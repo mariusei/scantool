@@ -545,6 +545,7 @@ def should_analyze(self, file_path: str) -> bool:
 |--------|---------|---------|
 | `get_extensions()` | File extensions to handle | **Required** |
 | `get_language_name()` | Human-readable name | **Required** |
+| `SHEBANG_INTERPRETERS` | Interpreters whose `#!` line marks an extension-less file as this language (`bin/`, `libexec/` scripts) | `()` |
 | `_extract_structure()` | Tree-sitter AST traversal | **Required** (or override `scan()`) |
 | `scan()` | Extract structure from bytes | Tree-sitter pipeline w/ regex fallback |
 | `extract_imports()` | Find import statements | **Required** |

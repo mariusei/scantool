@@ -39,6 +39,8 @@ class PHPLanguage(BaseLanguage):
     - extract_calls(): Not implemented (uses base class default)
     """
 
+    SHEBANG_INTERPRETERS = ("php",)
+
     CONDENSE_STRATEGY = "skeleton"
 
     # ── Reachability contract (dead-code detection) ──────────────────────────
