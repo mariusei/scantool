@@ -60,6 +60,7 @@ SAMPLES = {
     "text": "text/samples/basic.txt",
     "toml": "toml/samples/basic.toml",
     "typescript": "typescript/samples/basic.ts",
+    "xml": "xml/samples/basic.xml",
     "yaml": "yaml/samples/basic.yaml",
     "zig": "zig/samples/basic.zig",
 }

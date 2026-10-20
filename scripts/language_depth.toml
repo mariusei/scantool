@@ -106,3 +106,13 @@ repo = "kubernetes-sigs/kind"
 commit = "9de9541673737982391303f4102679be52e22430"
 path = "."
 extensions = ["Makefile", ".mk", "Makefile.common.in"]
+
+# Markup, not code: defs and calls are 0 by design (an element is not a
+# definition); files linked counts the in-format references (Import,
+# ProjectReference, .slnx Project) between project files.
+[[corpus]]
+language = "xml"
+repo = "dotnet/BenchmarkDotNet"
+commit = "19c7a9ac3e4fa6d6183b08ca8dd9e03d9b240e78"
+path = "."
+extensions = [".xml", ".xsd", ".xsl", ".xslt", ".csproj", ".fsproj", ".vbproj", ".props", ".targets", ".slnx"]

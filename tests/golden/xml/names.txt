@@ -1,0 +1,25 @@
+<1 file seen, 22 structures shown, 1 excluded (.git/)>
+basic.xml (3-38)
+- project @3
+  - modelVersion 4.0.0 @5
+  - groupId org.example @6
+  - artifactId demo-parent @7
+  - version 1.2.0 @8
+  - packaging pom @9
+  - description Builds the demo & its <tools>. @10
+  - modules @12
+    - module core @13
+    - module cli @14
+  - properties @17
+    - java.version 17 @18
+  - dependencies @21
+    - dependency @22
+      - groupId org.junit.jupiter @23
+      - artifactId junit-jupiter @24
+      - scope test @25
+  - profiles @29
+    - release <profile> @30
+      - activation @31
+        - performRelease <property> value="true" @32
+  - xi:include href="build/plugins.xml" @37
+[exit 0]

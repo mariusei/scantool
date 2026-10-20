@@ -103,6 +103,14 @@
     "files": 332,
     "files_import_linked": 0.5633
   },
+  "xml": {
+    "calls_per_file": 0.0,
+    "defs_called": 0.0,
+    "defs_per_file": 0.0,
+    "dropped_callers": 0,
+    "files": 53,
+    "files_import_linked": 0.7925
+  },
   "zig": {
     "calls_per_file": 202.6829,
     "defs_called": 0.7726,

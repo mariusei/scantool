@@ -1,0 +1,9 @@
+<2 branches vs v1, 2 with structural changes; parts: branches 3, shared 3, order 1> base v1 (700fdfe)
+branches:
+a  merge-base 700fdfe  1 ahead 0 behind  1 file, +0 ~2 -0 structures
+b  merge-base 700fdfe  1 ahead 0 behind  1 file, +0 ~2 -0 structures
+shared: overlap (structures touched by 2+ branches): 2 in 1 file
+  basic.xml::project.modules.module   a(~)  b(~)
+  basic.xml::project.version          a(~)  b(~)
+order: merge order (a hint, not a verdict): a < b   (all share 2 structures; ordered by change size, a touches 2 and b touches 2)
+[exit 0]

@@ -205,7 +205,7 @@ class FileScanner:
 
         def annotated() -> list[StructureNode] | None:
             structures = parse_cache.scan(scanner, source_code)
-            if structures is not None and suffix not in self.BINARY_EXTENSIONS:
+            if structures is not None and suffix not in self.BINARY_EXTENSIONS and scanner.EXCERPTS:
                 self._annotate_salient_code(
                     structures,
                     label,
