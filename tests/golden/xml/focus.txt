@@ -1,0 +1,18 @@
+basic.xml::project.modelVersion (5-5)
+edges: no blank line above, no blank line below, then groupId (6)
+next: sct history basic.xml::project.modelVersion (the commits that changed it)
+basic.xml (1-38)
+- project @3
+  - modelVersion 4.0.0 @5
+     5 |   <modelVersion>4.0.0</modelVersion>
+  - groupId org.example @6
+  - artifactId demo-parent @7
+  - version 1.2.0 @8
+  - packaging pom @9
+  - description Builds the demo & its <tools>. @10
+  - modules @12
+  - properties @17
+  - dependencies @21
+  - profiles @29
+  - xi:include href="build/plugins.xml" @37
+[exit 0]

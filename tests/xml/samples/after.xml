@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A Maven parent project: two modules and a shared dependency. -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xi="http://www.w3.org/2001/XInclude">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.example</groupId>
+  <artifactId>demo-parent</artifactId>
+  <version>1.3.0</version>
+  <packaging>pom</packaging>
+  <description>Builds the demo &amp; its <![CDATA[<tools>]]>.</description>
+
+  <modules>
+    <module>core</module>
+    <module>cli</module>
+    <module>web</module>
+  </modules>
+
+  <properties>
+    <java.version>17</java.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <profiles>
+    <profile id="release">
+      <activation>
+        <property name="performRelease" value="true"/>
+      </activation>
+    </profile>
+  </profiles>
+
+  <xi:include href="build/plugins.xml"/>
+</project>

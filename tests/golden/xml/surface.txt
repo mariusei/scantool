@@ -1,0 +1,4 @@
+<1 public name, 1 via definition> package xml @WORKTREE
+basic
+  project     xml/basic.xml:3
+[exit 0]

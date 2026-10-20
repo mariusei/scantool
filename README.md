@@ -330,6 +330,7 @@ scantool does not attempt it.
 | `.txt` | Plain Text | sections, paragraphs |
 | `.json` | JSON | object keys (nested fully), arrays with item counts, scalar values |
 | `.toml` | TOML | tables, array tables, nested keys, inline tables, arrays with item counts |
+| `.xml`, `.xsd`, `.xsl`, `.xslt`, `.csproj`, `.fsproj`, `.vbproj`, `.props`, `.targets`, `.slnx` | XML | elements named by their `id`/`name`/`key`/`Include` attribute, attributes, leaf text; Maven, MSBuild, `.slnx`, XSD, XSLT and XInclude file references as import edges |
 | `.csv`, `.tsv` | CSV | columns with position, sampled type and an example value; row count; the first rows (from a 64 KiB prefix, so a large file costs no parse) |
 | `.png`, `.jpg`, `.gif`, `.webp` | Images | format, dimensions, colors, content type |
 

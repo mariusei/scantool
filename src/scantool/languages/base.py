@@ -578,6 +578,12 @@ class BaseLanguage(ABC):
     #:   "trivial" lines ARE the content)
     CONDENSE_STRATEGY: str | None = None
 
+    #: Whether salient nodes get code excerpts at all. False where a node's
+    #: lines hold nothing its row and its children's rows do not already show
+    #: (an XML element: attributes, text, child elements), so an excerpt only
+    #: repeats them; the root element of a data file spans the whole file.
+    EXCERPTS: bool = True
+
     # Label for grouped import statements in the structure tree
     # (e.g. Rust shows "use statements")
     IMPORT_GROUP_LABEL: str = "import statements"

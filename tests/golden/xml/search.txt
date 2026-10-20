@@ -1,0 +1,8 @@
+<1 file seen, 22 structures shown, 1 excluded (.git/)>
+1 hits in 1 structures for /xi:include/
+leads: none (no name called in the hits is defined in another scanned file)
+
+./basic.xml
+- project > xi:include href="build/plugins.xml" @37-37  (1 hit)
+   37 | <xi:include href="build/plugins.xml"/>
+[exit 0]
