@@ -986,6 +986,12 @@ class BaseLanguage(ABC):
         overlap's colliding names and CODE HEALTH agree with the compiler."""
         return self.is_private_name(node.name)
 
+    #: Whether a word in the file's text can reference a definition (a call,
+    #: an import, a name in a doc or a config). False for data, whose cells
+    #: are values: CODE HEALTH neither reads nor word-counts such a file
+    #: (2.4 s for a 100 MB CSV in a directory scan).
+    MENTIONS_ARE_REFERENCES: bool = True
+
     def is_exempt_from_unreferenced(self, definition: Any) -> bool:
         """Whether CODE HEALTH's UNREFERENCED check must skip this definition
         (a DefinitionInfo: name, modifiers, decorators, parent) regardless of

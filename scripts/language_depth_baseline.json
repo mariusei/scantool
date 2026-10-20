@@ -31,6 +31,14 @@
     "files": 241,
     "files_import_linked": 0.8008
   },
+  "csv": {
+    "calls_per_file": 0.0,
+    "defs_called": 0.0,
+    "defs_per_file": 0.0,
+    "dropped_callers": 0,
+    "files": 25,
+    "files_import_linked": 0.0
+  },
   "dockerfile": {
     "calls_per_file": 0.0,
     "defs_called": 0.0,

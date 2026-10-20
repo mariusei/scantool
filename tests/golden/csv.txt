@@ -1,0 +1,13 @@
+<1 file seen, 7 structures shown>
+basic.csv (1-5)
+- order_id col 1, int @1 # e.g. 1001
+- placed_on col 2, date @1 # e.g. 2024-03-01
+- customer col 3, text @1 # e.g. Ada Lovelace
+- amount col 4, float @1 # e.g. 19.99
+- paid col 5, bool @1 # e.g. true
+- note col 6, text or empty @1 # e.g. gift, wrapped
+- rows 4 rows, 6 columns, comma-separated @2
+   2 | 1001,2024-03-01,Ada Lovelace,19.99,true,
+   3 | 1002,2024-03-02,"Hopper, Grace",5,false,"gift, wrapped"
+   4 | 1003,2024-03-04,Alan Turing,120.50,true,"two
+   5 | lines"

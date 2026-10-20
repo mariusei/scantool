@@ -44,6 +44,7 @@ SAMPLES = {
     "csharp": "csharp/samples/Basic.cs",
     "dockerfile": "dockerfile/samples/basic.Dockerfile",
     "css": "css/basic.css",
+    "csv": "csv/samples/basic.csv",
     "go": "go/samples/basic.go",
     "html": "html/basic.html",
     "java": "java/samples/Basic.java",

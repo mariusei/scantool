@@ -100,6 +100,15 @@ commit = "ee8396b5a049ae648b9a75575507984d27a119bb"
 path = "."
 extensions = [".sh", ".bash"]
 
+# Data, not code: calls, imports and defs are 0 by design (a CSV names no
+# other file); the corpus guards the scan against real files and sizes.
+[[corpus]]
+language = "csv"
+repo = "vega/vega-datasets"
+commit = "175a81ca00b2a0d9bd1159ddcf2b7b232e591d93"
+path = "data"
+extensions = [".csv", ".tsv"]
+
 [[corpus]]
 language = "powershell"
 repo = "pester/Pester"

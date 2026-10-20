@@ -330,6 +330,7 @@ scantool does not attempt it.
 | `.txt` | Plain Text | sections, paragraphs |
 | `.json` | JSON | object keys (nested fully), arrays with item counts, scalar values |
 | `.toml` | TOML | tables, array tables, nested keys, inline tables, arrays with item counts |
+| `.csv`, `.tsv` | CSV | columns with position, sampled type and an example value; row count; the first rows (from a 64 KiB prefix, so a large file costs no parse) |
 | `.png`, `.jpg`, `.gif`, `.webp` | Images | format, dimensions, colors, content type |
 
 Broken files fall back to regex extraction, so a file that no longer parses

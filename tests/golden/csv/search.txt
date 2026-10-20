@@ -1,0 +1,9 @@
+<1 file seen, 7 structures shown, 1 excluded (.git/)>
+1 hits in 1 structures for /note/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers note (only the real call sites, not comments or strings)
+
+./basic.csv
+- note col 6, text or empty @1-1  (1 hit)
+   1 | order_id,placed_on,customer,amount,paid,note
+[exit 0]
