@@ -42,6 +42,7 @@ SAMPLES = {
     "c": "c_cpp/samples/basic.c",
     "cpp": "c_cpp/samples/basic.cpp",
     "csharp": "csharp/samples/Basic.cs",
+    "dockerfile": "dockerfile/samples/basic.Dockerfile",
     "css": "css/basic.css",
     "go": "go/samples/basic.go",
     "html": "html/basic.html",

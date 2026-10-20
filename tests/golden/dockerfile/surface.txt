@@ -1,0 +1,7 @@
+<4 public names, 4 via definition> package dockerfile @WORKTREE
+basic
+  GO_VERSION  = 1.22                   dockerfile/basic.Dockerfile:4
+  builder  FROM golang:${GO_VERSION}   dockerfile/basic.Dockerfile:7
+  test  FROM builder                   dockerfile/basic.Dockerfile:16
+  debian  FROM debian:bookworm-slim    dockerfile/basic.Dockerfile:20
+[exit 0]

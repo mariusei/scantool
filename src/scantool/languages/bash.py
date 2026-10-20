@@ -84,7 +84,7 @@ from .models import (
 
 # Bash's builtin commands (bash manual, "Shell Builtin Commands"): run by the
 # shell itself, never a function of the project unless the file redefines one.
-_BUILTINS = frozenset(
+SHELL_BUILTINS = frozenset(
     {
         ".",
         ":",
@@ -314,7 +314,10 @@ class BashLanguage(BaseLanguage):
             node = stack.pop()
             stack.extend(node.children)
             name = node.child_by_field_name("name") if node.type == "command" else None
-            if name is not None and (name.text or b"").decode("utf-8", "replace") not in _BUILTINS:
+            if (
+                name is not None
+                and (name.text or b"").decode("utf-8", "replace") not in SHELL_BUILTINS
+            ):
                 row = node.start_point[0] - offset
                 if 0 <= row < n_lines:
                     rows.add(row)
@@ -373,7 +376,7 @@ class BashLanguage(BaseLanguage):
         name = self._command_word(command, source_bytes)
         if name is None:
             return [], []
-        names = [name] if name not in _BUILTINS or name in def_names else []
+        names = [name] if name not in SHELL_BUILTINS or name in def_names else []
         arguments = [
             self._unquoted(a, source_bytes) for a in command.children_by_field_name("argument")
         ]
