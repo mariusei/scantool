@@ -192,6 +192,22 @@ CASES: dict[str, Case] = {
             "$(MAKE) -f path": ("tools.mk", "lint:\n\t$(MAKE) -f mk/rules.mk lint\n"),
         },
     ),
+    "dockerfile": Case(
+        target="scripts/entry.sh",
+        files={"scripts/entry.sh": 'exec "$@"\n'},
+        forms={
+            "COPY path": ("Dockerfile", "FROM a\nCOPY scripts/entry.sh /usr/local/bin/\n"),
+            "COPY glob": ("Dockerfile.dev", "FROM a\nCOPY scripts/*.sh /opt/\n"),
+            "RUN a path a directory copy put there": (
+                "app.Dockerfile",
+                "FROM a\nCOPY . /src\nRUN /src/scripts/entry.sh\n",
+            ),
+            "ENTRYPOINT on PATH": (
+                "images/Containerfile",
+                'FROM a\nCOPY scripts /usr/local/bin/\nENTRYPOINT ["entry.sh"]\n',
+            ),
+        },
+    ),
     "c": Case(
         target="include/dir/util.h",
         files={"include/dir/util.h": "int f(void);\n"},

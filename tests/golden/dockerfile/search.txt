@@ -1,0 +1,11 @@
+<1 file seen, 8 structures shown, 1 excluded (.git/)>
+2 hits in 2 structures for /PATH/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers PATH (only the real call sites, not comments or strings)
+
+./basic.Dockerfile
+- builder > GOFLAGS = -trimpath @12-12  (1 hit)
+   12 | GOFLAGS=-trimpath
+- debian > PATH = /opt/tools:$PATH @24-24  (1 hit)
+   24 | ENV PATH=/opt/tools:$PATH
+[exit 0]
