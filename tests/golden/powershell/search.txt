@@ -1,0 +1,10 @@
+<1 file seen, 15 structures shown, 1 excluded (.git/)>
+2 hits in 2 structures for /Invoke\-Publish/
+leads: none (no name called in the hits is defined in another scanned file)
+
+./basic.ps1
+- Invoke-Publish @73-77  (1 hit)
+   73 | function Invoke-Publish {
+- (module level) @80-80  (1 hit)
+   80 | Invoke-Publish
+[exit 0]
