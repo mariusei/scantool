@@ -1,0 +1,16 @@
+<1 file seen, 13 structures shown, 1 excluded (.git/)>
+5 hits in 4 structures for /help/
+leads: none (no name called in the hits is defined in another scanned file)
+next: sct callers help (only the real call sites, not comments or strings)
+
+./basic.mk
+- help @39-40  (2 hits)
+   39 | help:
+   40 | @echo "$(HELP_TEXT)"
+- Build, test and release the sample project. 2 lines @1-2  (1 hit)
+   2 | # Run `make help` for the list of targets.
+- (module level) @11-11  (1 hit)
+   11 | .PHONY: all build test release help
+- HELP_TEXT = Targets: all build test release @30-32  (1 hit)
+   30 | define HELP_TEXT
+[exit 0]

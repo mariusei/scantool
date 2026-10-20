@@ -317,6 +317,7 @@ scantool does not attempt it.
 | `.zig` | Zig | functions, structs, enums, unions, tests, constants |
 | `.swift` | Swift | classes, structs, enums, protocols, functions, extensions, constants |
 | `.sh`, `.bash` | Bash | functions, file-scope variables and exports, comment blocks, `source` and script-execution edges |
+| `Makefile`, `GNUmakefile`, `Makefile.*`, `.mk` | Make | targets with prerequisites, variables, `define` blocks; `include`, recursive-make and script-execution edges, prerequisite calls, default goal |
 | `.sql` | SQL | tables, views, functions, procedures, indexes, columns |
 | `.html` | HTML | document structure, elements, attributes |
 | `.css` | CSS | selectors, properties, media queries |

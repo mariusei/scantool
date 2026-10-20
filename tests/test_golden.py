@@ -48,6 +48,7 @@ SAMPLES = {
     "java": "java/samples/Basic.java",
     "json": "json/samples/basic.json",
     "jupyter": "ipynb/samples/basic.ipynb",
+    "make": "make/samples/basic.mk",
     "markdown": "markdown/samples/basic.md",
     "php": "php/samples/basic.php",
     "python": "python/samples/basic.py",
