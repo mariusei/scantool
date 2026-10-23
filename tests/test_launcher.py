@@ -8,6 +8,7 @@ directory with a space in its path and a PATH that does not contain uv.
 """
 
 import asyncio
+import base64
 import os
 import shutil
 import stat
@@ -167,6 +168,30 @@ def test_cmd_launcher_runs_help_through_cmd(tmp_path):
         _assert_help(result.stdout)
     result = subprocess.run(["cmd", "/c", "sct", "scan", "no-such-file"], env=env, timeout=120)
     assert result.returncode == 1
+
+
+# The pattern that broke sct.cmd: PowerShell passes it to a native command
+# without quotes, and cmd.exe re-parsed it as three piped commands.
+PIPED_PATTERN = "niva|'-'|kjor"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell resolving sct on Windows")
+def test_exe_launcher_passes_a_piped_regex_from_powershell_unchanged(tmp_path):
+    bin_dir = tmp_path / "tool bin"
+    corpus = tmp_path / "corpus"
+    corpus.mkdir()
+    (corpus / "norsk.py").write_text("def kjor(niva):\n    return niva\n", encoding="utf-8")
+    launcher.ensure_launcher(bin_dir)
+    env = {**os.environ, "PATH": _path_without_uv(bin_dir)}
+    script = f"sct search '{corpus}' \"{PIPED_PATTERN}\"; exit $LASTEXITCODE"
+    encoded = base64.b64encode(script.encode("utf-16-le")).decode()
+    shells = [shell for shell in ("powershell", "pwsh") if shutil.which(shell)]
+    assert shells, "no PowerShell on this runner"
+    for shell in shells:
+        command = [shell, "-NoProfile", "-NonInteractive", "-EncodedCommand", encoded]
+        result = subprocess.run(command, capture_output=True, env=env, timeout=120)
+        assert result.returncode == 0, (shell, result.stdout, result.stderr)
+        assert f"/{PIPED_PATTERN}/".encode() in result.stdout, (shell, result.stdout)
 
 
 def test_every_tool_description_carries_the_absolute_fallback():
