@@ -68,7 +68,11 @@ def find_callers(directory: str, name: str) -> Callers:
         if call.callee_name != leaf:
             continue
         try:
-            lines = Path(directory, call.caller_file).read_text(errors="replace").split("\n")
+            lines = (
+                Path(directory, call.caller_file)
+                .read_text(encoding="utf-8", errors="replace")
+                .split("\n")
+            )
             text = lines[call.line - 1].strip() if 0 < call.line <= len(lines) else ""
         except OSError:
             text = ""

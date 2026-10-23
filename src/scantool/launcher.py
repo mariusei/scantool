@@ -95,7 +95,11 @@ def launcher_dir() -> Path:
     if uv:
         try:
             result = subprocess.run(
-                [uv, "tool", "dir", "--bin"], capture_output=True, text=True, timeout=10
+                [uv, "tool", "dir", "--bin"],
+                capture_output=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=10,
             )
             if result.returncode == 0 and result.stdout.strip():
                 return Path(result.stdout.strip())

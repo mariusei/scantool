@@ -124,7 +124,7 @@ def _compute_dead(directory: str, result) -> "tuple[set, bool]":
     corpus = []
     for f in reference_map.source_files(repo, _DEAD_EXTS):
         with contextlib.suppress(OSError):
-            corpus.append(f.read_text(errors="replace"))
+            corpus.append(f.read_text(encoding="utf-8", errors="replace"))
     blob = "\n".join(corpus)
     dyn = bool(re.search(r"\bgetattr\(|\bglobals\(\)\[|importlib", blob))
     # Precompute once (O(blob)): how often each name appears as a call `name(` and
@@ -150,7 +150,7 @@ def _compute_dead(directory: str, result) -> "tuple[set, bool]":
     def content_for(relfile: str) -> str:
         if relfile not in contents:
             try:
-                contents[relfile] = (repo / relfile).read_text(errors="replace")
+                contents[relfile] = (repo / relfile).read_text(encoding="utf-8", errors="replace")
             except OSError:
                 contents[relfile] = ""
         return contents[relfile]

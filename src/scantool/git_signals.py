@@ -66,7 +66,8 @@ def _run_git(directory: str, *args: str) -> str | None:
             stdin=subprocess.DEVNULL,  # never the MCP transport
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
-            text=True,
+            encoding="utf-8",
+            errors="replace",
             # A session of its own so killpg reaches every descendant. Windows
             # has no such flag (False is the default); taskkill /T walks the tree.
             start_new_session=os.name != "nt",
