@@ -3,11 +3,12 @@ line the tool descriptions carry.
 
 The launcher is the only channel that reaches the agent's shell without a
 user step, so it is exercised the way a shell would: the sh file through
-its shebang (Git Bash on Windows), the .cmd file through cmd.exe, from a
-directory with a space in its path and a PATH that does not contain uv.
+its shebang (Git Bash on Windows), the .exe through cmd.exe and PowerShell,
+from a directory with a space in its path and a PATH that does not contain uv.
 """
 
 import asyncio
+import base64
 import os
 import shutil
 import stat
@@ -47,11 +48,12 @@ def test_launcher_files_carry_marker_interpreter_and_line_endings():
     assert launcher.quoted_interpreter() in sh
     assert "\r" not in sh
     if os.name == "nt":
-        cmd = files["sct.cmd"].decode()
-        assert cmd.startswith("@echo off\r\n")
-        assert f":: {launcher.MARKER} " in cmd
-        assert launcher.quoted_interpreter() in cmd
-        assert "\n" not in cmd.replace("\r\n", "")
+        exe = files["sct.exe"]
+        assert exe.startswith(b"MZ")
+        assert f"# {launcher.MARKER} {launcher.__version__}".encode() in exe
+        assert f'#!"{sys.executable}"'.encode() in exe
+        assert launcher.keep_existing(exe)
+        assert set(files) == {"sct", "sct.exe"}
     else:
         assert set(files) == {"sct"}
 
@@ -101,7 +103,7 @@ def test_marked_launcher_with_a_live_interpreter_and_current_version_is_kept(tmp
     other = Path(shutil.which("git") or sys.executable)
     (tmp_path / "sct").write_bytes(_marked_launcher(other.as_posix(), launcher.__version__))
     written = {p.name for p in launcher.ensure_launcher(tmp_path)}
-    assert "sct" not in written  # on Windows the absent sct.cmd is still written
+    assert "sct" not in written  # on Windows the absent sct.exe is still written
     assert other.as_posix().encode() in (tmp_path / "sct").read_bytes()
 
 
@@ -116,6 +118,27 @@ def test_marked_launcher_with_an_older_version_is_rewritten(tmp_path):
     (tmp_path / "sct").write_bytes(_marked_launcher(Path(sys.executable).as_posix(), "0.0.0"))
     assert [p.name for p in launcher.ensure_launcher(tmp_path)][:1] == ["sct"]
     assert (tmp_path / "sct").read_bytes() == launcher.launcher_files()["sct"]
+
+
+@pytest.mark.skipif(os.name != "nt", reason="the .exe launcher is Windows-only")
+def test_exe_launcher_with_an_older_version_is_rewritten(tmp_path):
+    older = launcher._windows_exe(launcher.quoted_interpreter(), "0.0.0")
+    (tmp_path / "sct.exe").write_bytes(older)
+    assert "sct.exe" in {p.name for p in launcher.ensure_launcher(tmp_path)}
+    assert (
+        f"# {launcher.MARKER} {launcher.__version__}".encode()
+        in (tmp_path / "sct.exe").read_bytes()
+    )
+
+
+def test_retired_cmd_launcher_is_removed_only_when_marked(tmp_path):
+    (tmp_path / "sct.cmd").write_bytes(f":: {launcher.MARKER} 0.32.0\r\n".encode())
+    launcher.ensure_launcher(tmp_path)
+    assert not (tmp_path / "sct.cmd").exists()
+    foreign = b"@echo off\r\necho someone else's sct\r\n"
+    (tmp_path / "sct.cmd").write_bytes(foreign)
+    launcher.ensure_launcher(tmp_path)
+    assert (tmp_path / "sct.cmd").read_bytes() == foreign
 
 
 def test_opt_out_writes_nothing(monkeypatch, tmp_path):
@@ -156,17 +179,41 @@ def test_sh_launcher_runs_help_through_the_shell(tmp_path):
     _assert_help(result.stdout)
 
 
-@pytest.mark.skipif(os.name != "nt", reason="cmd.exe launcher")
-def test_cmd_launcher_runs_help_through_cmd(tmp_path):
+@pytest.mark.skipif(os.name != "nt", reason="the .exe launcher is Windows-only")
+def test_exe_launcher_runs_help_through_cmd(tmp_path):
     bin_dir = tmp_path / "tool bin"
     launcher.ensure_launcher(bin_dir)
     env = {**os.environ, "PATH": _path_without_uv(bin_dir)}
-    for command in (["cmd", "/c", "sct.cmd", "--help"], ["cmd", "/c", "sct", "--help"]):
+    for command in (["cmd", "/c", "sct.exe", "--help"], ["cmd", "/c", "sct", "--help"]):
         result = subprocess.run(command, capture_output=True, env=env, cwd=tmp_path, timeout=120)
         assert result.returncode == 0, (command, result.stderr)
         _assert_help(result.stdout)
     result = subprocess.run(["cmd", "/c", "sct", "scan", "no-such-file"], env=env, timeout=120)
     assert result.returncode == 1
+
+
+# The pattern that broke sct.cmd: PowerShell passes it to a native command
+# without quotes, and cmd.exe re-parsed it as three piped commands.
+PIPED_PATTERN = "niva|'-'|kjor"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell resolving sct on Windows")
+def test_exe_launcher_passes_a_piped_regex_from_powershell_unchanged(tmp_path):
+    bin_dir = tmp_path / "tool bin"
+    corpus = tmp_path / "corpus"
+    corpus.mkdir()
+    (corpus / "norsk.py").write_text("def kjor(niva):\n    return niva\n", encoding="utf-8")
+    launcher.ensure_launcher(bin_dir)
+    env = {**os.environ, "PATH": _path_without_uv(bin_dir)}
+    script = f"sct search '{corpus}' \"{PIPED_PATTERN}\"; exit $LASTEXITCODE"
+    encoded = base64.b64encode(script.encode("utf-16-le")).decode()
+    shells = [shell for shell in ("powershell", "pwsh") if shutil.which(shell)]
+    assert shells, "no PowerShell on this runner"
+    for shell in shells:
+        command = [shell, "-NoProfile", "-NonInteractive", "-EncodedCommand", encoded]
+        result = subprocess.run(command, capture_output=True, env=env, timeout=120)
+        assert result.returncode == 0, (shell, result.stdout, result.stderr)
+        assert f"/{PIPED_PATTERN}/".encode() in result.stdout, (shell, result.stdout)
 
 
 def test_every_tool_description_carries_the_absolute_fallback():

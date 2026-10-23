@@ -12,7 +12,7 @@ SOLUTION:
   Two channels, both computed from the interpreter the server runs under:
   1. At server start, a launcher in uv's tool bin directory that runs
      `<this interpreter> -m scantool.cli`. A POSIX sh file (also for Git
-     Bash/MSYS on Windows) and, on Windows, a .cmd file for cmd.exe and
+     Bash/MSYS on Windows) and, on Windows, an .exe for cmd.exe and
      PowerShell. A marker comment makes it idempotent; a foreign `sct` is
      never touched.
   2. Every tool description carries the absolute fallback command line, for
@@ -30,6 +30,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 from . import __version__
@@ -39,8 +40,12 @@ log = logging.getLogger(__name__)
 MARKER = "scantool-launcher"
 OPT_OUT_ENV = "SCANTOOL_NO_CLI"
 
-# Both launcher forms quote the interpreter and carry the marker with a version.
-INTERPRETER_IN_LAUNCHER = re.compile(r'"([^"]+)" -m scantool\.cli')
+# Both launcher forms quote the interpreter and carry the marker with a version:
+# the sh file in its exec line, the .exe in its shebang (the sh file's
+# unquoted #!/bin/sh never matches).
+INTERPRETER_IN_LAUNCHER = re.compile(r'"([^"]+)" -m scantool\.cli|#!"([^"]+)"\r?\n')
+# Launchers earlier versions wrote; removed when they carry the marker.
+RETIRED_LAUNCHERS = ("sct.cmd",)
 VERSION_IN_MARKER = re.compile(re.escape(MARKER) + r" (\S+)")
 
 
@@ -101,15 +106,30 @@ def launcher_dir() -> Path:
 
 def launcher_files(python: str = "", version: str = __version__) -> dict[str, bytes]:
     """Filename -> content. The sh file serves POSIX and Git Bash/MSYS; the
-    .cmd file serves cmd.exe and PowerShell and only exists on Windows."""
+    .exe serves cmd.exe and PowerShell and only exists on Windows."""
     python = python or quoted_interpreter()
     files = {
         "sct": f'#!/bin/sh\n# {MARKER} {version}\nexec {python} -m scantool.cli "$@"\n'.encode(),
     }
     if os.name == "nt":
-        cmd = f"@echo off\r\n:: {MARKER} {version}\r\n{python} -m scantool.cli %*\r\nexit /b %ERRORLEVEL%\r\n"
-        files["sct.cmd"] = cmd.encode()
+        files["sct.exe"] = _windows_exe(python, version)
     return files
+
+
+def _windows_exe(python: str, version: str) -> bytes:
+    """distlib's launcher (the one pip used for years) with the shebang and
+    the script appended: it passes its own command line to the interpreter
+    unchanged. A .cmd file cannot: cmd.exe re-parses %*, so an unquoted
+    regex like a|b, which PowerShell passes as is, became a pipe."""
+    from distlib.scripts import SCRIPT_TEMPLATE, ScriptMaker
+
+    with tempfile.TemporaryDirectory() as tmp:
+        maker = ScriptMaker(None, tmp)
+        maker.executable = python.replace("/", "\\")
+        maker.variants = {""}
+        maker.script_template = f"# {MARKER} {version}\n{SCRIPT_TEMPLATE}"
+        (path,) = maker.make("sct = scantool.cli:main")
+        return Path(path).read_bytes()
 
 
 def _version_key(version: str) -> tuple[int, ...]:
@@ -126,7 +146,7 @@ def keep_existing(current: bytes) -> bool:
     text = current.decode(errors="replace")
     python = INTERPRETER_IN_LAUNCHER.search(text)
     marked = VERSION_IN_MARKER.search(text)
-    if python is None or marked is None or not Path(python.group(1)).exists():
+    if python is None or marked is None or not Path(python.group(1) or python.group(2)).exists():
         return False
     return _version_key(marked.group(1)) >= _version_key(__version__)
 
@@ -161,6 +181,11 @@ def ensure_launcher(bin_dir: Path | None = None) -> list[Path]:
             target.chmod(0o755)
             written.append(target)
             log.debug("%s now runs %s", target, interpreter())
+        for name in RETIRED_LAUNCHERS:
+            stale = bin_dir / name
+            if stale.exists() and MARKER.encode() in stale.read_bytes():
+                stale.unlink()
+                log.debug("%s removed: superseded", stale)
     except OSError as exc:
         log.debug("could not write the sct launcher: %s", exc)
     return written

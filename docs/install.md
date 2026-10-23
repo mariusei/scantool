@@ -94,9 +94,11 @@ use.
 
 When the server starts it writes a launcher named `sct` into uv's tool bin
 directory (`uv tool dir --bin`: `~/.local/bin` on macOS and Linux,
-`%USERPROFILE%\.local\bin` on Windows, where it also writes `sct.cmd` for
-cmd.exe and PowerShell). PATH and shell profiles are never edited, and a file
-named `sct` that scantool did not write is never touched. Opt out with
+`%USERPROFILE%\.local\bin` on Windows, where it also writes `sct.exe` for
+cmd.exe and PowerShell; the `sct.cmd` earlier versions wrote is removed, since
+cmd.exe split a regex like `a|b` at the pipe). PATH and shell profiles are
+never edited, and a file named `sct` that scantool did not write is never
+touched. Opt out with
 `SCANTOOL_NO_CLI=1` in the server's environment, for example
 `"env": {"SCANTOOL_NO_CLI": "1"}` in the `mcpServers` entry.
 
