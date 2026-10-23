@@ -208,6 +208,22 @@ def test_stdout_is_utf8_and_lf_even_when_the_console_is_not():
     assert b"\r\n" not in result.stdout
 
 
+@pytest.mark.parametrize("command", [("search", "{dir}", "Kj"), ("focus", "{file}", "kjor")])
+def test_source_lines_are_read_as_utf8_whatever_the_locale(tmp_path, command):
+    """Python's default text encoding is the locale's, cp1252 on Windows, where
+    a UTF-8 'ø' came out as 'Ã¸' until every source read named its encoding.
+    The Windows runner exercises that; elsewhere the locale is UTF-8 already."""
+    source = tmp_path / "norsk.py"
+    source.write_text('def kjor():\n    print("Kjører")\n', encoding="utf-8")
+    env = {key: value for key, value in os.environ.items() if key != "PYTHONUTF8"}
+    argv = [arg.format(dir=tmp_path, file=source) for arg in command]
+    result = subprocess.run(
+        [sys.executable, "-m", "scantool.cli", *argv], capture_output=True, env=env, timeout=120
+    )
+    assert result.returncode == 0, result.stderr
+    assert "Kjører".encode() in result.stdout, result.stdout
+
+
 def test_help_opens_with_the_three_lines_every_agent_needs(capsys):
     out, _, _ = run("--help", capsys=capsys)
     first = [line.strip() for line in out.splitlines()[2:5]]
