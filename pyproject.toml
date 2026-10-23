@@ -55,6 +55,7 @@ dependencies = [
     "tree-sitter-swift>=0.0.1",
     "numpy>=1.24.0",
     "tree-sitter-language-pack>=1.15.8",
+    "distlib>=0.3.6 ; sys_platform == 'win32'",
 ]
 
 [dependency-groups]

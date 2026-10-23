@@ -2014,6 +2014,7 @@ name = "scantool"
 version = "0.32.0"
 source = { editable = "." }
 dependencies = [
+    { name = "distlib", marker = "sys_platform == 'win32'" },
     { name = "fastmcp" },
     { name = "numpy" },
     { name = "pglast" },
@@ -2050,6 +2051,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "distlib", marker = "sys_platform == 'win32'", specifier = ">=0.3.6" },
     { name = "fastmcp", specifier = ">=4.0.2" },
     { name = "numpy", specifier = ">=1.24.0" },
     { name = "pglast", specifier = ">=7.7" },
