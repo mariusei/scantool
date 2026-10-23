@@ -194,7 +194,7 @@ def test_exe_launcher_runs_help_through_cmd(tmp_path):
 
 # The pattern that broke sct.cmd: PowerShell passes it to a native command
 # without quotes, and cmd.exe re-parsed it as three piped commands.
-PIPED_PATTERN = "niva|'-'|kjor"
+PIPED_PATTERN = "alpha|'-'|beta"
 
 
 @pytest.mark.skipif(os.name != "nt", reason="PowerShell resolving sct on Windows")
@@ -202,7 +202,7 @@ def test_exe_launcher_passes_a_piped_regex_from_powershell_unchanged(tmp_path):
     bin_dir = tmp_path / "tool bin"
     corpus = tmp_path / "corpus"
     corpus.mkdir()
-    (corpus / "norsk.py").write_text("def kjor(niva):\n    return niva\n", encoding="utf-8")
+    (corpus / "norsk.py").write_text("def beta(alpha):\n    return alpha\n", encoding="utf-8")
     launcher.ensure_launcher(bin_dir)
     env = {**os.environ, "PATH": _path_without_uv(bin_dir)}
     script = f"sct search '{corpus}' \"{PIPED_PATTERN}\"; exit $LASTEXITCODE"
