@@ -74,7 +74,7 @@ def search_content(
         if is_file_info_stub(structures):
             continue
         try:
-            lines = Path(file_path).read_text(errors="replace").split("\n")
+            lines = Path(file_path).read_text(encoding="utf-8", errors="replace").split("\n")
         except OSError:
             continue
 
@@ -183,7 +183,7 @@ def find_leads(found: list[NodeHits], results: dict) -> list[tuple[str, list[tup
         if node_hits.file not in block_cache:
             try:
                 block_cache[node_hits.file] = (
-                    Path(node_hits.file).read_text(errors="replace").split("\n")
+                    Path(node_hits.file).read_text(encoding="utf-8", errors="replace").split("\n")
                 )
             except OSError:
                 block_cache[node_hits.file] = []

@@ -168,7 +168,7 @@ def short(top: str, ref: str) -> str:
 def read_side(top: str, side: str, rel: str) -> str | None:
     if side == WORKTREE:
         try:
-            return (Path(top) / rel).read_text(errors="replace")
+            return (Path(top) / rel).read_text(encoding="utf-8", errors="replace")
         except OSError:
             return None
     return git_output(top, "show", f"{side}:{rel}")

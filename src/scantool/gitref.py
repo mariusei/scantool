@@ -46,7 +46,10 @@ def repo_and_rel(path: str) -> tuple[str, str]:
     while not os.path.isdir(probe):
         probe = os.path.dirname(probe)
     result = subprocess.run(
-        ["git", "-C", probe, "rev-parse", "--show-toplevel"], capture_output=True, text=True
+        ["git", "-C", probe, "rev-parse", "--show-toplevel"],
+        capture_output=True,
+        encoding="utf-8",
+        errors="replace",
     )
     if result.returncode != 0:
         raise RefError(f"{path} is not inside a git repository; --ref needs one")

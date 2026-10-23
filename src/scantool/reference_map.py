@@ -228,7 +228,7 @@ def _http_producers(repo: Path) -> list[Producer]:
             stack.extend(n.children)
         # 2. imperative routes — inline handler, the path itself is the producer id.
         try:
-            text = src.read_text(errors="replace")
+            text = src.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
         for m in _IMPERATIVE_ROUTE.finditer(text):
@@ -243,7 +243,7 @@ def _http_consumers(repo: Path) -> tuple[str, set[str]]:
     blob, names = [], set()
     for f in source_files(repo, _ROUTE_CONSUMER_EXTS):
         try:
-            text = f.read_text(errors="replace")
+            text = f.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
         # strip route-DEFINITION lines so a route's own decorator path is not
@@ -295,7 +295,7 @@ def _jinja_consumers(repo: Path) -> tuple[str, set[str]]:
     refs = []
     for f in source_files(repo, (".py", ".html", ".j2", ".jinja")):
         try:
-            refs += TEMPLATE_REF.findall(f.read_text(errors="replace"))
+            refs += TEMPLATE_REF.findall(f.read_text(encoding="utf-8", errors="replace"))
         except OSError:
             continue
     return "\n".join(refs), set()

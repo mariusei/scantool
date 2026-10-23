@@ -799,7 +799,7 @@ def scan_file(
             structures[0].file_metadata["churn_90d"] = churn
 
         if focus is not None:
-            source_lines = Path(file_path).read_text(errors="replace").split("\n")
+            source_lines = Path(file_path).read_text(encoding="utf-8", errors="replace").split("\n")
             answer = _focus_answer(
                 file_path, structures, source_lines, focus, output_format, body_only, on_disk=True
             )
@@ -807,7 +807,7 @@ def scan_file(
 
         delta_note = ""
         if delta and caller and output_format != "json":
-            source_lines = Path(file_path).read_text(errors="replace").split("\n")
+            source_lines = Path(file_path).read_text(encoding="utf-8", errors="replace").split("\n")
             diff = scan_memory.diff_and_record(file_path, structures, source_lines, detail, caller)
             if diff is not None:
                 changed, unchanged = apply_node_delta(structures, diff)
@@ -1045,7 +1045,9 @@ def scan_directory(
                         unchanged_paths.append(path)
                     elif results[path] and not is_file_info_stub(results[path]):
                         try:
-                            lines = Path(path).read_text(errors="replace").split("\n")
+                            lines = (
+                                Path(path).read_text(encoding="utf-8", errors="replace").split("\n")
+                            )
                             scan_memory.diff_and_record(
                                 path, results[path], lines, GIST_DETAIL, caller
                             )

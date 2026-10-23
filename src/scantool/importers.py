@@ -58,7 +58,11 @@ def _site(directory: str, imp: ImportInfo) -> ImportSite:
     text = ""
     if imp.line > 0:
         try:
-            lines = Path(directory, imp.source_file).read_text(errors="replace").split("\n")
+            lines = (
+                Path(directory, imp.source_file)
+                .read_text(encoding="utf-8", errors="replace")
+                .split("\n")
+            )
             text = lines[imp.line - 1].strip() if imp.line <= len(lines) else ""
         except OSError:
             pass

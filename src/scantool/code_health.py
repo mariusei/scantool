@@ -102,7 +102,7 @@ def analyze_health(
             contents[file_path] = ""
             continue
         try:
-            contents[file_path] = Path(file_path).read_text(errors="replace")
+            contents[file_path] = Path(file_path).read_text(encoding="utf-8", errors="replace")
         except OSError:
             contents[file_path] = ""
 
