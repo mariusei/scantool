@@ -2011,7 +2011,7 @@ wheels = [
 
 [[package]]
 name = "scantool"
-version = "0.32.0"
+version = "0.32.1"
 source = { editable = "." }
 dependencies = [
     { name = "distlib", marker = "sys_platform == 'win32'" },
