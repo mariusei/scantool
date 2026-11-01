@@ -166,7 +166,7 @@ class TestDiff:
         assert code == 0
         assert out.splitlines()[0].startswith("note: main and feature diverged at ")
         assert "comparing " in out.splitlines()[0] and "→ feature" in out.splitlines()[0]
-        assert "<5 files changed, 4 with structural rows, 1 without (1 unstructured type)>" in out
+        assert "<5 files changed, 5 with structural rows>" in out
         rows = [line.strip() for line in out.splitlines() if line.startswith("  ")]
         assert any(r.startswith("+ NEW_FLAG") and "B:4" in r for r in rows)
         assert any(r.startswith("~ LIMIT") and "[value: 3 → 4]" in r for r in rows)
@@ -185,7 +185,9 @@ class TestDiff:
         assert any(r.startswith("~ Section A") and "[body: 1 doc line]" in r for r in rows)
         assert "new.py [new file]" in out and "  - Box @" in out and "    - open" in out
         assert "keep.py [deleted]" in out and any(r.startswith("- kept()") for r in rows)
-        assert "data.xyz (unstructured type)" in out
+        # no handler for .xyz: rows come from the guessed outline, labelled so
+        assert "data.xyz [no handler: outline guessed by indentation]  (~1)" in out
+        assert any(r.startswith("~ flat text") for r in rows)
         assert "main moved on" not in out  # main's own commit is not in main→feature
 
     def test_no_merge_base_compares_the_tips(self, repo, capsys):

@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from .focus import _RANGE
 from .languages import get_registry
 from .scanner import FileScanner
-from .structural_diff import NodeRecord, language_of, read_side, records
+from .structural_diff import GUESS_LABEL, NodeRecord, is_guess, language_of, read_side, records
 
 
 @dataclass
@@ -36,6 +36,7 @@ class Resolution:
     target: NodeRecord | None
     how: str  # same key | renamed | gone
     nearest: list[str]
+    guessed: bool = False  # no handler: structures from GenericLanguage's outline
 
 
 def _records_at(top: str, ref: str, rel: str) -> dict[str, NodeRecord] | None:
@@ -97,24 +98,28 @@ def resolve(top: str, rel: str, target: str | int, ref_from: str, ref_to: str) -
         names = ", ".join(sorted(r.name for r in source_table.values())[:12])
         return f"no structure encloses {what} in {rel} at {ref_from}; structures: {names}"
     target_table = _records_at(top, ref_to, rel) or {}
+    guessed = is_guess(source_table)
     if source.key in target_table:
-        return Resolution(rel, source, ref_from, ref_to, target_table[source.key], "same key", [])
+        return Resolution(
+            rel, source, ref_from, ref_to, target_table[source.key], "same key", [], guessed
+        )
     same_body = [
         r
         for r in target_table.values()
         if r.digest == source.digest and r.body and r.type == source.type
     ]
     if len(same_body) == 1:
-        return Resolution(rel, source, ref_from, ref_to, same_body[0], "renamed", [])
+        return Resolution(rel, source, ref_from, ref_to, same_body[0], "renamed", [], guessed)
     nearest = difflib.get_close_matches(
         source.name, [r.name for r in target_table.values()], n=3, cutoff=0.5
     )
-    return Resolution(rel, source, ref_from, ref_to, None, "gone", nearest)
+    return Resolution(rel, source, ref_from, ref_to, None, "gone", nearest, guessed)
 
 
 def format_resolution(resolution: Resolution) -> str:
     src = resolution.source
-    lines = [f"{resolution.path}::{src.name}@{resolution.ref_from} ({src.start}-{src.end})"]
+    guess = f"   [{GUESS_LABEL}]" if resolution.guessed else ""
+    lines = [f"{resolution.path}::{src.name}@{resolution.ref_from} ({src.start}-{src.end}){guess}"]
     if resolution.target is not None:
         dst = resolution.target
         how = "" if resolution.how == "same key" else f"   [{resolution.how} from {src.name}]"
@@ -133,6 +138,7 @@ def resolution_to_json(resolution: Resolution) -> dict:
     src, dst = resolution.source, resolution.target
     return {
         "path": resolution.path,
+        **({"guessed": True} if resolution.guessed else {}),
         "from": {"ref": resolution.ref_from, "name": src.name, "start": src.start, "end": src.end},
         "to": {
             "ref": resolution.ref_to,

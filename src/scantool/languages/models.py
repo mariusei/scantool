@@ -23,6 +23,7 @@ class Sweep:
     notes: list[str] = field(default_factory=list)  # one-line notices, e.g. an override
     excluded: Counter = field(default_factory=Counter)  # pattern label -> files and dirs
     unsupported: Counter = field(default_factory=Counter)  # extension -> files (listed as stubs)
+    guessed: Counter = field(default_factory=Counter)  # extension -> files outlined by indentation
     oversized: int = 0
 
 

@@ -40,6 +40,7 @@ from pathlib import Path
 from .focus import _RANGE, _resolve, _walk, resolving_name
 from .formatter import TreeFormatter
 from .languages.base import BaseLanguage, default_is_private_name
+from .languages.generic import GenericLanguage
 from .languages.models import StructureNode
 from .scanner import FileScanner
 
@@ -103,6 +104,7 @@ class FileDiff:
     rows: list[Row] = field(default_factory=list)
     skeleton: str | None = None  # a new file, as its tree
     reason: str | None = None  # why there are no rows
+    guessed: bool = False  # no handler: rows come from GenericLanguage's outline
 
 
 @dataclass
@@ -224,6 +226,14 @@ def _invert(row: tuple[str, str, str]) -> tuple[str, str, str]:
 # ── records per side ─────────────────────────────────────────────────────────
 
 
+GUESS_LABEL = "no handler: outline guessed by indentation"
+
+
+def is_guess(table: dict[str, NodeRecord]) -> bool:
+    """Whether a file's records come from GenericLanguage's best-guess outline."""
+    return any(record.type in GenericLanguage.NODE_TYPES for record in table.values())
+
+
 def language_of(scanner: FileScanner, rel: str) -> BaseLanguage | None:
     """The handler that owns a file, for its naming conventions."""
     return scanner.registry.get_for(rel)
@@ -258,12 +268,13 @@ def records(
                     if child.type != "file-info" and child.name:
                         covered.update(range(child.start_line, child.end_line + 1))
                 # The declaration line carries the name and the signature,
-                # both compared on their own; the body is what follows it.
+                # both compared on their own; the body is what follows it. A
+                # guessed outline has no parsed declaration (its first line
+                # may be a decorator or plain text), so its body is every line.
+                first = node.start_line - (node.type in GenericLanguage.NODE_TYPES)
                 body = [
                     line.rstrip()
-                    for number, line in enumerate(
-                        lines[node.start_line : node.end_line], node.start_line + 1
-                    )
+                    for number, line in enumerate(lines[first : node.end_line], first + 1)
                     if line.strip() and number not in covered
                 ]
                 out[key] = NodeRecord(
@@ -495,8 +506,10 @@ def diff_refs(
     # needs to build a call graph scoped to just this diff's files.
     changed: list[tuple[FileDiff, str, str, dict[str, NodeRecord]]] = []
     # (row, old rel, new rel, side-a content, side-b content) of the ~ row
-    # whose body changed most so far: the one the next: pointer reads
+    # whose body changed most so far: the one the next: pointer reads. On a
+    # tie a parsed structure wins over a guessed outline block.
     largest: tuple[Row, str, str, str, str] | None = None
+    largest_rank: tuple[int, bool] = (-1, False)
     for status, old_rel, new_rel in _name_status(top, side_a, side_b, pathspec):
         entry = FileDiff(
             path=new_rel,
@@ -517,6 +530,7 @@ def diff_refs(
                 entry.reason = "no structure"
             else:
                 entry.skeleton = TreeFormatter().format(new_rel, structures)
+                entry.guessed = any(n.type in GenericLanguage.NODE_TYPES for n in structures)
             continue
         b_content = read_side(top, side_b, new_rel) if not status.startswith("D") else None
         a_content = read_side(top, side_a, old_rel)
@@ -526,6 +540,7 @@ def diff_refs(
             entry.reason = "unstructured type"
             continue
         entry.rows = file_rows(a, b)
+        entry.guessed = is_guess(a) or is_guess(b)
         if not entry.rows:
             entry.reason = "no structural change"
         elif b_content is not None:
@@ -537,9 +552,10 @@ def diff_refs(
                     row.mark == "~"
                     and row.a_line
                     and row.b_line
-                    and (largest is None or row.changed_lines > largest[0].changed_lines)
+                    and (row.changed_lines, not entry.guessed) > largest_rank
                 ):
                     largest = (row, old_rel, new_rel, a_content or "", b_content)
+                    largest_rank = (row.changed_lines, not entry.guessed)
     _annotate_call_relations(scanner, changed)
     return DiffResult(side_a, side_b, files, focus=_focus(scanner, largest) if largest else None)
 
@@ -660,6 +676,8 @@ def format_diff(result: DiffResult, max_rows: int | None = None, root: str = "."
         label = file.path if not file.old_path else f"{file.path} (renamed from {file.old_path})"
         if file.deleted:
             label += " [deleted]"
+        if file.guessed:
+            label += f" [{GUESS_LABEL}]"
         if file.skeleton:
             lines.append(f"{label} [new file]")
             lines.extend("  " + line for line in file.skeleton.split("\n")[1:])
@@ -755,6 +773,7 @@ def diff_to_json(result: DiffResult) -> dict:
                 "path": f.path,
                 "old_path": f.old_path,
                 "new_file": f.skeleton is not None,
+                **({"guessed": True} if f.guessed else {}),
                 "rows": [
                     {
                         "mark": r.mark,

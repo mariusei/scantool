@@ -30,7 +30,16 @@ SCOPE:
 from dataclasses import dataclass
 
 from .resolve import _enclosing, _named, _records_at
-from .structural_diff import NodeRecord, Row, _row_text, file_rows, git_output, verify_ref
+from .structural_diff import (
+    GUESS_LABEL,
+    NodeRecord,
+    Row,
+    _row_text,
+    file_rows,
+    git_output,
+    is_guess,
+    verify_ref,
+)
 
 MAX_COMMITS = 400
 
@@ -54,6 +63,7 @@ class History:
     events: list[Event]  # newest first
     commits: int  # commits that touched the file, scanned
     truncated: bool  # more commits than MAX_COMMITS
+    guessed: bool = False  # no handler: structures from GenericLanguage's outline
 
 
 def _touching_commits(top: str, ref: str, rel: str) -> list[tuple[str, str, str, str]]:
@@ -120,7 +130,17 @@ def follow(top: str, rel: str, target: str | int, ref: str = "HEAD") -> History 
             if previous is None:
                 break
             key = previous.key
-    return History(rel, record.name, ref, record.start, record.end, events, len(commits), truncated)
+    return History(
+        rel,
+        record.name,
+        ref,
+        record.start,
+        record.end,
+        events,
+        len(commits),
+        truncated,
+        guessed=is_guess(table),
+    )
 
 
 def _event_row(current_side: dict, older_side: dict, key: str) -> Row | None:
@@ -166,7 +186,7 @@ def format_history(history: History) -> str:
     header = (
         f"<{', '.join(parts)}> history of {history.path}::{history.name}@{history.ref} "
         f"({history.start}-{history.end})"
-    )
+    ) + (f" [{GUESS_LABEL}]" if history.guessed else "")
     if not history.events:
         return header + "\nno commit in the file's history changes this structure"
     width = min(max(len(_row_text(e.row)) for e in history.events), 56)
@@ -190,6 +210,7 @@ def history_to_json(history: History) -> dict:
             "commits_touching_file": history.commits,
             "truncated": history.truncated,
             "ref": history.ref,
+            **({"guessed": True} if history.guessed else {}),
         },
         "path": history.path,
         "name": history.name,

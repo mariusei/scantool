@@ -48,7 +48,10 @@ def test_directory_scan_and_search_open_with_the_coverage_line(tmp_path):
     scan = _text(server.scan_directory(directory=str(src), delta=False, include_metadata=False))
     search = _text(server.search_structures(directory=str(src), content_pattern="return"))
     assert scan.splitlines()[0].startswith("<3 files seen, 2 structures shown")
-    assert search.splitlines()[0] == scan.splitlines()[0]
+    assert scan.splitlines()[0].endswith(", 1 unsupported (.xyz)>")
+    # search reads content, so the .xyz file is outlined by guess, not a stub
+    assert search.splitlines()[0].startswith("<3 files seen, 3 structures shown")
+    assert search.splitlines()[0].endswith(", 1 outlined by guess (.xyz)>")
     empty = _text(server.search_structures(directory=str(src), content_pattern="zzqq"))
     assert empty.splitlines()[0].startswith("<3 files seen") and "No content matches" in empty
 
