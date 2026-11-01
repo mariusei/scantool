@@ -90,6 +90,15 @@ def _next_focus_trailer(file_path: str, structures: list[StructureNode]) -> str:
     return f"\nnext: sct focus {file_path}::{name}" if name else ""
 
 
+def _guess_note(file_path: str, content: str | None = None) -> str | None:
+    """For a type no handler reads: the line saying the outline below is a
+    guess by indentation, so the consumer does not take it for a parse."""
+    if scanner.registry.get_class_for(file_path, content):
+        return None
+    kind = Path(file_path).suffix or Path(file_path).name
+    return f"<no handler for {kind}: best-guess outline, not a parse>"
+
+
 def _budget_for(budget: int | None, depth: str | None) -> int | None:
     """An explicit budget wins; otherwise depth names one of three tiers."""
     if budget is None and depth is not None:
@@ -560,16 +569,9 @@ def scan_file_content(
             budget=_budget_for(budget, depth),
             mode=mode,
             expand_values=depth == "deep",
+            fallback=True,
         )
-
-        if structures is None:
-            supported = ", ".join(scanner.get_supported_extensions())
-            return [
-                TextContent(
-                    type="text",
-                    text=f"Error: Unsupported file type. Supported extensions: {supported}",
-                )
-            ]
+        guess = _guess_note(filename, content)
 
         if not structures:
             return [TextContent(type="text", text=f"{filename} (empty file or no structure found)")]
@@ -583,6 +585,7 @@ def scan_file_content(
         if output_format == "json":
             document = {
                 "coverage": file_coverage(structures),
+                **({"guess": guess} if guess else {}),
                 **structures_to_json(structures, filename, return_dict=True),
             }
             return [TextContent(type="text", text=json.dumps(document, indent=2))]
@@ -594,7 +597,10 @@ def scan_file_content(
             condense=condense,
         )
         text = (
-            format_file_coverage(structures) + "\n" + custom_formatter.format(filename, structures)
+            format_file_coverage(structures)
+            + "\n"
+            + (guess + "\n" if guess else "")
+            + custom_formatter.format(filename, structures)
         )
         return [TextContent(type="text", text=text + _next_focus_trailer(filename, structures))]
 
@@ -780,15 +786,9 @@ def scan_file(
             line_edits=line_edits,
             mode=mode,
             expand_values=depth == "deep",
+            fallback=True,
         )
-
-        if structures is None:
-            supported = ", ".join(scanner.get_supported_extensions())
-            return [
-                TextContent(
-                    type="text", text=f"Unsupported file type. Supported extensions: {supported}"
-                )
-            ]
+        guess = _guess_note(file_path)
 
         if not structures:
             return [
@@ -822,6 +822,7 @@ def scan_file(
         if output_format == "json":
             document = {
                 "coverage": file_coverage(structures),
+                **({"guess": guess} if guess else {}),
                 **structures_to_json(structures, file_path, return_dict=True),
             }
             return [TextContent(type="text", text=json.dumps(document, indent=2))]
@@ -837,6 +838,7 @@ def scan_file(
             result = (
                 format_file_coverage(structures)
                 + "\n"
+                + (guess + "\n" if guess else "")
                 + delta_note
                 + custom_formatter.format(file_path, structures)
                 + _next_focus_trailer(file_path, structures)

@@ -9,6 +9,7 @@ from . import parse_cache
 from .gitignore import GitignoreParser, load_gitignore, tracked_directories
 from .glob_expander import expand_braces
 from .languages import StructureNode, get_registry
+from .languages.generic import GenericLanguage
 from .languages.models import Sweep
 from .languages.skip_patterns import should_skip_directory
 
@@ -133,6 +134,7 @@ class FileScanner:
         budget: int | None = None,
         mode: str = "balanced",
         expand_values: bool = False,
+        fallback: bool = False,
     ) -> list[StructureNode] | None:
         """
         Scan file content directly without requiring a file path.
@@ -148,12 +150,15 @@ class FileScanner:
             budget: Approximate token cap for code skeletons (see scan_file)
             mode: Saliency weight profile — "balanced" or "active"
             expand_values: Show module values whole (see scan_file)
+            fallback: Outline an unsupported type by indentation (see scan_file)
 
         Returns:
             List of StructureNode objects, or None if file type not supported
         """
         path = Path(filename)
-        scanner_class = self.registry.get_class_for(filename, content)
+        scanner_class = self.registry.get_class_for(filename, content) or (
+            GenericLanguage if fallback else None
+        )
         if not scanner_class:
             return None  # Unsupported file type
 
@@ -260,6 +265,7 @@ class FileScanner:
         mode: str = "balanced",
         max_bytes: int | None = None,
         expand_values: bool = False,
+        fallback: bool = False,
     ) -> list[StructureNode] | None:
         """
         Scan a single file and return its structure.
@@ -280,6 +286,10 @@ class FileScanner:
                 name+size stub instead of parsed (a data dump has no source
                 structure worth the ~seconds/GB cost). None = no cap, so an
                 explicit single-file scan always parses in full.
+            fallback: An unsupported type gets GenericLanguage's best-guess
+                outline (indentation; size only for binary) instead of None.
+                For explicit single-file reads, where None ends the answer;
+                sweeps, diffs and searches keep None and report the type.
 
         Returns:
             List of StructureNode objects, or None if file type not supported
@@ -290,7 +300,9 @@ class FileScanner:
             raise FileNotFoundError(f"File not found: {file_path}")
 
         # Get appropriate scanner for this file type
-        scanner_class = self.registry.get_class_for(str(path))
+        scanner_class = self.registry.get_class_for(str(path)) or (
+            GenericLanguage if fallback else None
+        )
 
         if not scanner_class:
             return None  # Unsupported file type
