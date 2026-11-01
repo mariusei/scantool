@@ -74,6 +74,10 @@ class GenericLanguage(BaseLanguage):
     #: Line starts that close a block opened above them.
     CLOSER_PREFIXES = ("}", "]", ")", "</")
 
+    #: The node types scan() produces; a record of one of them says its file
+    #: was outlined by guess, which diff, history and resolve tell the reader.
+    NODE_TYPES = frozenset({"outline", "flat-text", "binary"})
+
     #: Git's rule for "binary": a NUL byte among the first 8000 bytes.
     BINARY_SNIFF_BYTES = 8000
 
@@ -90,13 +94,14 @@ class GenericLanguage(BaseLanguage):
         block anywhere has no outline to give; it gets one node with its
         line count.
         """
-        if b"\0" in source_code[: self.BINARY_SNIFF_BYTES]:
+        if self.is_binary(source_code):
             return [
                 StructureNode(
                     type="binary",
-                    name=f"binary ({len(source_code)} bytes)",
+                    name="binary",
                     start_line=0,
                     end_line=0,
+                    signature=f"{len(source_code)} bytes",
                 )
             ]
 
@@ -110,13 +115,19 @@ class GenericLanguage(BaseLanguage):
         if all(node.start_line == node.end_line for node in nodes):
             return [
                 StructureNode(
-                    type="text",
-                    name=f"flat text ({len(content)} lines, no indented blocks)",
+                    type="flat-text",
+                    name="flat text",
+                    signature=f"{len(content)} lines, no indented blocks",
                     start_line=content[0] + 1,
                     end_line=content[-1] + 1,
                 )
             ]
         return nodes
+
+    @classmethod
+    def is_binary(cls, head: bytes) -> bool:
+        """Git's test: a NUL byte among the first BINARY_SNIFF_BYTES."""
+        return b"\0" in head[: cls.BINARY_SNIFF_BYTES]
 
     def _outline(self, lines: list[str], kinds: list[str], lo: int, hi: int) -> list[StructureNode]:
         """One node per line at the shallowest indentation within [lo, hi)."""
@@ -155,7 +166,7 @@ class GenericLanguage(BaseLanguage):
             name, signature = self._split_head(lines[head].strip())
             nodes.append(
                 StructureNode(
-                    type="block",
+                    type="outline",
                     name=name,
                     start_line=start + 1,
                     end_line=last + 1,

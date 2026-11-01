@@ -134,7 +134,6 @@ class FileScanner:
         budget: int | None = None,
         mode: str = "balanced",
         expand_values: bool = False,
-        fallback: bool = False,
     ) -> list[StructureNode] | None:
         """
         Scan file content directly without requiring a file path.
@@ -150,17 +149,13 @@ class FileScanner:
             budget: Approximate token cap for code skeletons (see scan_file)
             mode: Saliency weight profile — "balanced" or "active"
             expand_values: Show module values whole (see scan_file)
-            fallback: Outline an unsupported type by indentation (see scan_file)
 
         Returns:
-            List of StructureNode objects, or None if file type not supported
+            List of StructureNode objects; a type without a handler gets
+            GenericLanguage's best-guess outline (see scan_file)
         """
         path = Path(filename)
-        scanner_class = self.registry.get_class_for(filename, content) or (
-            GenericLanguage if fallback else None
-        )
-        if not scanner_class:
-            return None  # Unsupported file type
+        scanner_class = self.registry.get_class_for(filename, content) or GenericLanguage
 
         source_code = content.encode("utf-8") if isinstance(content, str) else content
         structures = self._scan_source(
@@ -265,7 +260,6 @@ class FileScanner:
         mode: str = "balanced",
         max_bytes: int | None = None,
         expand_values: bool = False,
-        fallback: bool = False,
     ) -> list[StructureNode] | None:
         """
         Scan a single file and return its structure.
@@ -286,13 +280,13 @@ class FileScanner:
                 name+size stub instead of parsed (a data dump has no source
                 structure worth the ~seconds/GB cost). None = no cap, so an
                 explicit single-file scan always parses in full.
-            fallback: An unsupported type gets GenericLanguage's best-guess
-                outline (indentation; size only for binary) instead of None.
-                For explicit single-file reads, where None ends the answer;
-                sweeps, diffs and searches keep None and report the type.
 
         Returns:
-            List of StructureNode objects, or None if file type not supported
+            List of StructureNode objects. A type without a handler gets
+            GenericLanguage's best-guess outline (by indentation; one node
+            naming the size for binary content), so every per-file reader
+            (scan, focus, diff, overlap, resolve, history) answers. A sweep
+            decides for itself whether to read such files.
         """
         path = Path(file_path)
 
@@ -300,12 +294,7 @@ class FileScanner:
             raise FileNotFoundError(f"File not found: {file_path}")
 
         # Get appropriate scanner for this file type
-        scanner_class = self.registry.get_class_for(str(path)) or (
-            GenericLanguage if fallback else None
-        )
-
-        if not scanner_class:
-            return None  # Unsupported file type
+        scanner_class = self.registry.get_class_for(str(path)) or GenericLanguage
 
         # Get file metadata
         file_stats = os.stat(file_path)
@@ -534,6 +523,7 @@ class FileScanner:
         exclude_patterns: list[str] | None = None,
         mode: str = "balanced",
         max_files: int | None = None,
+        read_unsupported: bool = False,
     ) -> Sweep:
         """
         Scan all supported files in a directory and account for the rest.
@@ -546,6 +536,11 @@ class FileScanner:
             mode: Saliency weight profile per file — "balanced" or "active"
             max_files: Stop scanning after this many matching files. None scans
                 every match
+            read_unsupported: Outline text files of a type without a handler
+                (GenericLanguage, counted as guessed) instead of listing them
+                as stubs. For readers of content, such as search, where a stub
+                would hide matches; listings keep the stub. Binary content and
+                files over SWEEP_MAX_BYTES stay stubs either way.
 
         Returns:
             Sweep: results (file path -> structures) plus what was excluded by
@@ -647,6 +642,15 @@ class FileScanner:
                         file_stats = os.stat(file_str)
                     except OSError:
                         continue
+                    if read_unsupported and file_stats.st_size <= SWEEP_MAX_BYTES:
+                        with open(file_str, "rb") as f:
+                            head = f.read(GenericLanguage.BINARY_SNIFF_BYTES)
+                        if not GenericLanguage.is_binary(head):
+                            sweep.guessed[file_path.suffix or "(no extension)"] += 1
+                            sweep.results[file_str] = self.scan_file(file_str, mode=mode)
+                            if max_files is not None and len(sweep.results) >= max_files:
+                                return sweep
+                            continue
                     sweep.unsupported[file_path.suffix or "(no extension)"] += 1
                     sweep.results[file_str] = [
                         _file_info_stub(file_path, file_stats, reason="unsupported")

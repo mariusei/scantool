@@ -1,5 +1,6 @@
-"""An explicit read of a type no handler knows answers with a best-guess
-outline instead of failing; sweeps still report the type as unsupported.
+"""A file type no handler knows is read through a best-guess outline: scan,
+focus, diff, overlap, resolve, history and search answer and say the outline
+is a guess. A directory listing still reports the type as unsupported.
 
 The outline is GenericLanguage.scan: one node per line at the shallowest
 indentation, spanning the block that line opens. These tests pin the shape
@@ -10,8 +11,12 @@ import json
 import subprocess
 
 from scantool import server
+from scantool.directory_formatter import format_coverage
+from scantool.history import follow, format_history
 from scantool.languages.generic import GenericLanguage
+from scantool.resolve import resolve
 from scantool.scanner import FileScanner
+from scantool.structural_diff import GUESS_LABEL, diff_refs, format_diff
 
 BICEP = b"""// Storage for the solver
 @description('Region')
@@ -69,14 +74,13 @@ def test_a_punctuation_second_word_stays_in_the_signature():
 
 def test_text_without_indented_blocks_is_one_flat_node():
     (node,) = outline(b"one\ntwo\nthree\n")
-    assert (node.type, node.start_line, node.end_line) == ("text", 1, 3)
-    assert "3 lines" in node.name
+    assert (node.type, node.start_line, node.end_line) == ("flat-text", 1, 3)
+    assert (node.name, node.signature) == ("flat text", "3 lines, no indented blocks")
 
 
 def test_binary_content_is_named_by_size_not_outlined():
     (node,) = outline(b"\x7fELF\x00\x01" + b"x" * 100)
-    assert node.type == "binary"
-    assert "106 bytes" in node.name
+    assert (node.type, node.name, node.signature) == ("binary", "binary", "106 bytes")
 
 
 def test_blank_or_comment_only_text_has_no_structure():
@@ -84,16 +88,14 @@ def test_blank_or_comment_only_text_has_no_structure():
     assert outline(b"// only a comment\n\n") == []
 
 
-def test_the_scanner_uses_the_fallback_only_when_asked(tmp_path):
+def test_the_scanner_falls_back_for_a_type_without_a_handler(tmp_path):
     path = tmp_path / "main.bicep"
     path.write_bytes(BICEP)
     scanner = FileScanner()
-    assert scanner.scan_file(str(path)) is None
-    assert scanner.scan_content(BICEP, "main.bicep") is None
-    on_disk = scanner.scan_file(str(path), fallback=True) or []
+    on_disk = scanner.scan_file(str(path)) or []
     assert on_disk[0].type == "file-info"
     assert on_disk[1].name == "param location"
-    assert [n.name for n in scanner.scan_content(BICEP, "main.bicep", fallback=True) or []] == [
+    assert [n.name for n in scanner.scan_content(BICEP, "main.bicep") or []] == [
         "param location",
         "resource kv",
         "output kvId",
@@ -135,14 +137,29 @@ def test_focus_reads_a_guessed_block_whole(tmp_path):
     assert "10 |   }" in text and "11 | }" in text
 
 
-def test_scan_at_a_ref_uses_the_fallback(tmp_path):
-    def git(*args):
-        subprocess.run(["git", *args], cwd=tmp_path, check=True, capture_output=True)
+def git(repo, *args) -> str:
+    return subprocess.run(
+        ["git", "-c", "user.name=t", "-c", "user.email=t@t", *args],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
 
-    git("init", "-q")
+
+def repo_with_two_commits(tmp_path):
+    """main.bicep committed, then the resource body edited and committed."""
+    git(tmp_path, "init", "-q")
     (tmp_path / "main.bicep").write_bytes(BICEP)
-    git("add", ".")
-    git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "c")
+    git(tmp_path, "add", ".")
+    git(tmp_path, "commit", "-qm", "first")
+    (tmp_path / "main.bicep").write_bytes(BICEP.replace(b"name: 'kv'", b"name: 'kv2'"))
+    git(tmp_path, "commit", "-qam", "second")
+    return tmp_path
+
+
+def test_scan_at_a_ref_uses_the_fallback(tmp_path):
+    repo_with_two_commits(tmp_path)
     text = text_of(
         server.scan_file(str(tmp_path / "main.bicep"), ref="HEAD", include_metadata=False)
     )
@@ -150,7 +167,67 @@ def test_scan_at_a_ref_uses_the_fallback(tmp_path):
     assert "resource kv" in text
 
 
-def test_a_sweep_still_reports_the_type_as_unsupported(tmp_path):
+def test_a_listing_sweep_still_reports_the_type_as_unsupported(tmp_path):
     (tmp_path / "main.bicep").write_bytes(BICEP)
     sweep = FileScanner().sweep(str(tmp_path))
     assert sweep.unsupported == {".bicep": 1}
+    assert not sweep.guessed
+
+
+def test_a_reading_sweep_outlines_text_and_keeps_binary_as_a_stub(tmp_path):
+    (tmp_path / "main.bicep").write_bytes(BICEP)
+    (tmp_path / "blob.bin").write_bytes(b"\x00\x01binary")
+    sweep = FileScanner().sweep(str(tmp_path), read_unsupported=True)
+    assert sweep.guessed == {".bicep": 1}
+    assert sweep.unsupported == {".bin": 1}
+    assert format_coverage(sweep).endswith(", 1 outlined by guess (.bicep)>")
+
+
+def test_search_finds_content_in_a_type_without_a_handler(tmp_path):
+    (tmp_path / "main.bicep").write_bytes(BICEP)
+    text = text_of(server.search_structures(str(tmp_path), content_pattern="tenantId"))
+    assert "1 outlined by guess (.bicep)" in text
+    assert "- resource kv " in text and "9 | tenantId: tenant()" in text
+
+
+def test_diff_gives_rows_for_a_guessed_file_and_says_so(tmp_path):
+    repo = repo_with_two_commits(tmp_path)
+    result = diff_refs(str(repo), "HEAD~1", "HEAD")
+    (entry,) = result.files
+    assert entry.guessed
+    assert [(row.mark, row.name) for row in entry.rows] == [("~", "resource kv")]
+    assert f"main.bicep [{GUESS_LABEL}]" in format_diff(result)
+
+
+def test_history_follows_a_guessed_block(tmp_path):
+    repo = repo_with_two_commits(tmp_path)
+    history = follow(str(repo), "main.bicep", "resource kv")
+    assert not isinstance(history, str)
+    assert history.guessed and len(history.events) == 2
+    assert format_history(history).split("\n")[0].endswith(f"[{GUESS_LABEL}]")
+
+
+def test_resolve_carries_a_line_through_a_guessed_outline(tmp_path):
+    repo = repo_with_two_commits(tmp_path)
+    resolution = resolve(str(repo), "main.bicep", 7, "HEAD~1", "HEAD")
+    assert not isinstance(resolution, str)
+    assert resolution.guessed
+    assert resolution.target is not None and resolution.target.name == "resource kv"
+
+
+def test_diff_sees_a_change_on_the_first_line_of_a_guessed_block(tmp_path):
+    # The first line of a guessed block is a decorator or plain text, not a
+    # parsed declaration, so it belongs to the compared body
+    git(tmp_path, "init", "-q")
+    (tmp_path / "main.bicep").write_bytes(BICEP)
+    (tmp_path / "notes.log").write_text("one\n")
+    git(tmp_path, "add", ".")
+    git(tmp_path, "commit", "-qm", "first")
+    (tmp_path / "main.bicep").write_bytes(BICEP.replace(b"'Region'", b"'Region, again'"))
+    (tmp_path / "notes.log").write_text("one changed\n")
+    git(tmp_path, "commit", "-qam", "second")
+    rows = {
+        entry.path: [(row.mark, row.name) for row in entry.rows]
+        for entry in diff_refs(str(tmp_path), "HEAD~1", "HEAD").files
+    }
+    assert rows == {"main.bicep": [("~", "param location")], "notes.log": [("~", "flat text")]}

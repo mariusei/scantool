@@ -38,6 +38,8 @@ def format_coverage(sweep: Sweep) -> str:
         parts.append(f"{sum(sweep.excluded.values())} excluded ({_top(sweep.excluded)})")
     if sweep.unsupported:
         parts.append(f"{sum(sweep.unsupported.values())} unsupported ({_top(sweep.unsupported)})")
+    if sweep.guessed:
+        parts.append(f"{sum(sweep.guessed.values())} outlined by guess ({_top(sweep.guessed)})")
     if sweep.oversized:
         parts.append(f"{sweep.oversized} oversized")
     return "<" + ", ".join(parts) + ">"
@@ -51,6 +53,7 @@ def coverage_dict(sweep: Sweep) -> dict:
         "excluded": dict(sweep.excluded),
         "unsupported": dict(sweep.unsupported),
         "oversized": sweep.oversized,
+        **({"guessed": dict(sweep.guessed)} if sweep.guessed else {}),
         "notes": list(sweep.notes),
     }
 

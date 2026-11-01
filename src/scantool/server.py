@@ -569,7 +569,6 @@ def scan_file_content(
             budget=_budget_for(budget, depth),
             mode=mode,
             expand_values=depth == "deep",
-            fallback=True,
         )
         guess = _guess_note(filename, content)
 
@@ -786,7 +785,6 @@ def scan_file(
             line_edits=line_edits,
             mode=mode,
             expand_values=depth == "deep",
-            fallback=True,
         )
         guess = _guess_note(file_path)
 
@@ -1401,13 +1399,16 @@ def _search_scope(path: str) -> Sweep:
     """The files a search covers: a directory swept recursively, or the one
     file named (search reads content by path, so a file is a scope too)."""
     if not os.path.isfile(path):
-        return scanner.sweep(path, "**/*")
+        return scanner.sweep(path, "**/*", read_unsupported=True)
     structures = scanner.scan_file(path)
     sweep = Sweep(directory=path, results={})
-    if structures is None:
-        sweep.unsupported[os.path.splitext(path)[1].lower() or "(no ext)"] += 1
+    ext = os.path.splitext(path)[1].lower() or "(no ext)"
+    if structures is None or any(node.type == "binary" for node in structures):
+        sweep.unsupported[ext] += 1
     else:
         sweep.results[path] = structures
+        if not scanner.registry.get_class_for(path):
+            sweep.guessed[ext] += 1
     return sweep
 
 
